@@ -1,0 +1,38 @@
+{% extends "_layouts/cp" %}
+
+{% set title = entry.label ?: (entry.method ~ ' ' ~ entry.path) %}
+{% set selectedSubnavItem = 'log' %}
+{% set crumbs = [
+  { label: "Bee"|t('bee'), url: url('bee/log') },
+  { label: "Log"|t('bee'), url: url('bee/log') },
+] %}
+
+{% block content %}
+
+  <div class="pane">
+    <table class="data fullwidth">
+      <tbody>
+        <tr><th style="width:180px">{{ "When"|t('bee') }}</th><td>{{ entry.dateCreated|datetime('long') }}</td></tr>
+        <tr><th>{{ "Method"|t('bee') }}</th><td class="code">{{ entry.method }}</td></tr>
+        <tr><th>{{ "Path"|t('bee') }}</th><td class="code">{{ entry.path }}</td></tr>
+        <tr>
+          <th>{{ "Status"|t('bee') }}</th>
+          <td><span class="status {{ entry.success ? 'green' : 'red' }}"></span> {{ entry.status ?: '—' }}</td>
+        </tr>
+        <tr><th>{{ "Duration"|t('bee') }}</th><td>{{ entry.durationMs|number_format(1) }}ms</td></tr>
+        {% if entry.error %}
+          <tr><th>{{ "Error"|t('bee') }}</th><td class="error">{{ entry.error }}</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="light">{{ "Credentials are never logged: the signature and the token live in the URL query string, and only the path is recorded."|t('bee') }}</p>
+
+  <h2>{{ "Request"|t('bee') }}</h2>
+  <pre class="code" style="padding:12px; background:#f3f7fc; border-radius:5px; overflow:auto; max-height:400px;">{{ entry.request ?: '—' }}</pre>
+
+  <h2>{{ "Response"|t('bee') }}</h2>
+  <pre class="code" style="padding:12px; background:#f3f7fc; border-radius:5px; overflow:auto; max-height:400px;">{{ entry.response ?: '—' }}</pre>
+
+{% endblock %}

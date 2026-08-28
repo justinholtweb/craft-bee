@@ -1,0 +1,147 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms.twig" as forms %}
+
+{% set title = isNew ? "New catalog source"|t('bee') : source.name %}
+{% set selectedSubnavItem = 'catalog' %}
+{% set crumbs = [
+  { label: "Bee"|t('bee'), url: url('bee/catalog') },
+  { label: "Catalog"|t('bee'), url: url('bee/catalog') },
+] %}
+{% set fullPageForm = not readOnly %}
+
+{% block content %}
+
+  {% if readOnly %}
+    <div class="pane">
+      <p class="light">{{ "Sources live in project config, which is read-only because allowAdminChanges is off. Change this in an environment where admin changes are allowed, and deploy it."|t('bee') }}</p>
+    </div>
+  {% endif %}
+
+  <input type="hidden" name="action" value="bee/catalog/save-source">
+  {{ redirectInput('bee/catalog') }}
+  {% if not isNew %}<input type="hidden" name="uid" value="{{ source.uid }}">{% endif %}
+
+  {{ forms.textField({
+    first: true,
+    label: "Name"|t('bee'),
+    id: 'name',
+    name: 'name',
+    value: source.name,
+    required: true,
+    errors: source.getErrors('name'),
+    disabled: readOnly,
+  }) }}
+
+  {{ forms.selectField({
+    label: "Element type"|t('bee'),
+    instructions: "Save and reopen after changing this — the scope options below depend on it."|t('bee'),
+    id: 'elementType',
+    name: 'elementType',
+    options: elementTypeOptions,
+    value: source.elementType,
+    errors: source.getErrors('elementType'),
+    disabled: readOnly,
+  }) }}
+
+  {% if groupOptions|length %}
+    {{ forms.checkboxSelectField({
+      label: "Scope"|t('bee'),
+      instructions: "Leave everything unchecked to include all of them."|t('bee'),
+      id: 'groupUids',
+      name: 'groupUids',
+      options: groupOptions,
+      values: source.groupUids,
+      disabled: readOnly,
+    }) }}
+  {% endif %}
+
+  {% if typeOptions|length %}
+    {{ forms.checkboxSelectField({
+      label: "Entry types"|t('bee'),
+      instructions: "Leave everything unchecked to include all of them."|t('bee'),
+      id: 'typeUids',
+      name: 'typeUids',
+      options: typeOptions,
+      values: source.typeUids,
+      disabled: readOnly,
+    }) }}
+  {% endif %}
+
+  {{ forms.lightswitchField({
+    label: "Enabled"|t('bee'),
+    id: 'enabled',
+    name: 'enabled',
+    on: source.enabled,
+    disabled: readOnly,
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Live elements only"|t('bee'),
+    instructions: "Disabled, expired and pending elements are removed from Recombee instead of being sent. Leave this on unless you filter on status yourself."|t('bee'),
+    id: 'liveOnly',
+    name: 'liveOnly',
+    on: source.liveOnly,
+    disabled: readOnly,
+  }) }}
+
+  <hr>
+
+  <h2>{{ "Properties"|t('bee') }}</h2>
+  <p class="light">
+    {{ "Bee always sends title, url, imageUrl, itemType, siteId, sourceHandle, slug, enabled, postDate, expiryDate and updatedAt. Everything below is on top of those."|t('bee') }}
+  </p>
+  <p class="light">
+    {{ "Property names are shared across the whole Recombee database, so two sources that both send “price” have to agree on its type."|t('bee') }}
+  </p>
+
+  {{ forms.editableTableField({
+    label: "Mappings"|t('bee'),
+    id: 'properties',
+    name: 'properties',
+    cols: {
+      name: { heading: "Recombee property"|t('bee'), type: 'singleline', class: 'code', width: '22%' },
+      type: { heading: "Type"|t('bee'), type: 'select', options: propertyTypeOptions, width: '16%' },
+      kind: { heading: "Read from"|t('bee'), type: 'select', options: kindOptions, width: '16%' },
+      value: { heading: "Field handle, attribute, mapper key or Twig"|t('bee'), type: 'singleline', class: 'code' },
+      enabled: { heading: "On"|t('bee'), type: 'checkbox', thin: true },
+    },
+    rows: source.properties|map(p => {
+      name: p.name,
+      type: p.type,
+      kind: p.kind,
+      value: p.value,
+      enabled: p.enabled,
+    }),
+    addRowLabel: "Add a property"|t('bee'),
+    errors: source.getErrors('properties'),
+    allowAdd: not readOnly,
+    allowDelete: not readOnly,
+    allowReorder: not readOnly,
+    static: readOnly,
+  }) }}
+
+  <div class="pane">
+    <h3>{{ "Built-in mappers"|t('bee') }}</h3>
+    <p class="light">{{ "Set “Read from” to “Built-in mapper” and use one of these keys."|t('bee') }}</p>
+    <table class="data fullwidth">
+      <tbody>
+        {% for key, label in specialOptions %}
+          <tr>
+            <td class="code" style="width:30%">{{ key }}</td>
+            <td class="light">{{ label }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pane">
+    <h3>{{ "Twig mappings"|t('bee') }}</h3>
+    <p class="light">
+      {{ "Rendered as an object template with the element in scope, e.g."|t('bee') }}
+      <code>{% verbatim %}{{ object.author.fullName }}{% endverbatim %}</code>.
+      {{ "For a set or an image list, output one value per line."|t('bee') }}
+    </p>
+  </div>
+
+{% endblock %}

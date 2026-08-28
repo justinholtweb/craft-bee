@@ -1,0 +1,387 @@
+{% import "_includes/forms.twig" as forms %}
+
+{% set settings = settings ?? plugin.settings %}
+{% set isPro = plugin.isPro() %}
+{% set proTip = "Pro"|t('bee') %}
+
+<div id="bee-settings">
+
+  <h2>{{ "Connection"|t('bee') }}</h2>
+
+  {{ forms.lightswitchField({
+    label: "Enabled"|t('bee'),
+    instructions: "Off means Bee makes no outbound request at all — no syncing, no tracking, no recommendations."|t('bee'),
+    id: 'enabled',
+    name: 'enabled',
+    on: settings.enabled,
+  }) }}
+
+  {{ forms.autosuggestField({
+    label: "Database ID"|t('bee'),
+    instructions: "From the Recombee console. Use an environment variable so staging and production can point at different databases."|t('bee'),
+    id: 'databaseId',
+    name: 'databaseId',
+    value: settings.databaseId,
+    suggestEnvVars: true,
+    placeholder: '$BEE_DATABASE_ID',
+    errors: settings.getErrors('databaseId'),
+  }) }}
+
+  {{ forms.autosuggestField({
+    label: "Private token"|t('bee'),
+    instructions: "The **private** token, not the public one. It signs every request and must never reach the browser."|t('bee'),
+    id: 'privateToken',
+    name: 'privateToken',
+    value: settings.privateToken,
+    suggestEnvVars: true,
+    placeholder: '$BEE_PRIVATE_TOKEN',
+    errors: settings.getErrors('privateToken'),
+  }) }}
+
+  {{ forms.selectField({
+    label: "Region"|t('bee'),
+    instructions: "Must match the region the database was created in. A database reached in the wrong region answers 401, not 404."|t('bee'),
+    id: 'region',
+    name: 'region',
+    options: regions|keys|map(r => { label: regions[r] ~ ' (' ~ r ~ ')', value: r }),
+    value: settings.region,
+  }) }}
+
+  {{ forms.autosuggestField({
+    label: "Base URI override"|t('bee'),
+    instructions: "Only for a Recombee dedicated deployment. Leave empty to use the region above."|t('bee'),
+    id: 'baseUri',
+    name: 'baseUri',
+    value: settings.baseUri,
+    suggestEnvVars: true,
+    class: 'code',
+  }) }}
+
+  <div class="field">
+    <div class="heading"><label>{{ "Test the connection"|t('bee') }}</label></div>
+    <div class="input">
+      <button type="button" class="btn" id="bee-test">{{ "Test connection"|t('bee') }}</button>
+      <span id="bee-test-result" class="light" style="margin-left: 8px;"></span>
+    </div>
+    <div class="instructions"><p>{{ "Saves nothing — it just asks Recombee for the item-property list with the credentials above."|t('bee') }}</p></div>
+  </div>
+
+  <hr>
+
+  <h2>{{ "Catalog"|t('bee') }}</h2>
+
+  {{ forms.checkboxSelectField({
+    label: "Sites to sync"|t('bee'),
+    instructions: "Item IDs carry a site ID as soon as more than one site is synced, so changing this changes every item ID. Re-sync with --force afterwards."|t('bee'),
+    id: 'syncSites',
+    name: 'syncSites',
+    options: sites|map(s => { label: s.name, value: s.id }),
+    values: settings.syncSites == '*' ? sites|map(s => s.id) : settings.syncSites,
+    showAllOption: true,
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Sync on save"|t('bee'),
+    instructions: "Push an element to Recombee when it is saved, and remove it when it is unpublished or deleted."|t('bee'),
+    id: 'autoSync',
+    name: 'autoSync',
+    on: settings.autoSync,
+  }) }}
+
+  {{ forms.selectField({
+    label: "How"|t('bee'),
+    id: 'syncMode',
+    name: 'syncMode',
+    options: [
+      { label: "On the queue (recommended)"|t('bee'), value: 'queue' },
+      { label: "During the save request"|t('bee'), value: 'inline' },
+    ],
+    value: settings.syncMode,
+    instructions: "Inline keeps Recombee current to the second, at the cost of adding an API round trip to every save."|t('bee'),
+  }) }}
+
+  {{ forms.textField({
+    label: "Batch size"|t('bee'),
+    instructions: "Requests per batch during a bulk sync."|t('bee'),
+    id: 'batchSize',
+    name: 'batchSize',
+    value: settings.batchSize,
+    size: 6,
+    type: 'number',
+    errors: settings.getErrors('batchSize'),
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Create item properties automatically"|t('bee'),
+    instructions: "Declare a new mapping's property in Recombee the first time a sync runs. Existing property types are never changed — Recombee cannot recast one without dropping its values."|t('bee'),
+    id: 'autoCreateProperties',
+    name: 'autoCreateProperties',
+    on: settings.autoCreateProperties,
+  }) }}
+
+  <hr>
+
+  <h2>{{ "Interactions"|t('bee') }}</h2>
+
+  {{ forms.lightswitchField({
+    label: "Track interactions"|t('bee'),
+    instructions: "Without interactions there is nothing for Recombee to learn from, and recommendations stay generic."|t('bee'),
+    id: 'trackingEnabled',
+    name: 'trackingEnabled',
+    on: settings.trackingEnabled,
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Inject the front-end runtime"|t('bee'),
+    instructions: "Adds a dependency-free script that records detail views with dwell time and attributes clicks back to the recommendation that produced them. Nothing visitor-specific is written into the page, so pages stay cacheable."|t('bee'),
+    id: 'injectRuntime',
+    name: 'injectRuntime',
+    on: settings.injectRuntime,
+  }) }}
+
+  {{ forms.textField({
+    label: "Detail-view delay"|t('bee'),
+    instructions: "Seconds on the page before a view counts. Firing on load counts every bounce and every prefetch as interest."|t('bee'),
+    id: 'detailViewDelay',
+    name: 'detailViewDelay',
+    value: settings.detailViewDelay,
+    size: 5,
+    type: 'number',
+    unit: "seconds"|t('bee'),
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Track signed-out visitors"|t('bee'),
+    instructions: "Anonymous visitors get a first-party cookie holding a random ID. No personal data is stored against it."|t('bee'),
+    id: 'trackGuests',
+    name: 'trackGuests',
+    on: settings.trackGuests,
+  }) }}
+
+  {{ forms.textField({
+    label: "Cookie name"|t('bee'),
+    id: 'guestCookieName',
+    name: 'guestCookieName',
+    value: settings.guestCookieName,
+    errors: settings.getErrors('guestCookieName'),
+  }) }}
+
+  {{ forms.selectField({
+    label: "Consent"|t('bee'),
+    id: 'consentMode',
+    name: 'consentMode',
+    options: [
+      { label: "Always track"|t('bee'), value: 'always' },
+      { label: "Only when a consent cookie says so"|t('bee'), value: 'cookie' },
+    ],
+    value: settings.consentMode,
+    instructions: "An unanswered banner counts as “no”. A view sent before consent cannot be recalled after it."|t('bee'),
+  }) }}
+
+  {{ forms.textField({
+    label: "Consent cookie name"|t('bee'),
+    instructions: "The cookie your consent platform sets."|t('bee'),
+    id: 'consentCookieName',
+    name: 'consentCookieName',
+    value: settings.consentCookieName,
+  }) }}
+
+  {{ forms.textField({
+    label: "Values that mean consent"|t('bee'),
+    instructions: "Comma separated. Matched case-insensitively, as a substring, so a JSON consent blob works too."|t('bee'),
+    id: 'consentCookieValues',
+    name: 'consentCookieValues',
+    value: settings.consentCookieValues,
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Merge guest history on sign-in"|t('bee') ~ (isPro ? '' : ' — ' ~ proTip),
+    instructions: "When a visitor signs in or checks out, fold the browsing they did as a guest into their account. Without this, the session that led to the sale is thrown away at the moment it becomes most useful."|t('bee'),
+    id: 'mergeGuestsOnLogin',
+    name: 'mergeGuestsOnLogin',
+    on: settings.mergeGuestsOnLogin,
+    disabled: not isPro,
+  }) }}
+
+  {% if plugin.commerceIsReady() %}
+    <hr>
+    <h2>{{ "Commerce"|t('bee') }}</h2>
+
+    {{ forms.lightswitchField({
+      label: "Track purchases"|t('bee'),
+      instructions: "One purchase per line item, on order completion. The strongest signal a store has."|t('bee'),
+      id: 'trackPurchases',
+      name: 'trackPurchases',
+      on: settings.trackPurchases,
+    }) }}
+
+    {{ forms.lightswitchField({
+      label: "Track cart additions"|t('bee') ~ (isPro ? '' : ' — ' ~ proTip),
+      id: 'trackCartAdditions',
+      name: 'trackCartAdditions',
+      on: settings.trackCartAdditions,
+      disabled: not isPro,
+    }) }}
+
+    {{ forms.lightswitchField({
+      label: "Record variants rather than products"|t('bee'),
+      instructions: "When both are synced, the variant is the thing with a price, a SKU and a stock level."|t('bee'),
+      id: 'purchaseVariants',
+      name: 'purchaseVariants',
+      on: settings.purchaseVariants,
+    }) }}
+  {% endif %}
+
+  <hr>
+
+  <h2>{{ "Recommendations"|t('bee') }}</h2>
+
+  {{ forms.textField({
+    label: "Default count"|t('bee'),
+    id: 'defaultCount',
+    name: 'defaultCount',
+    value: settings.defaultCount,
+    size: 5,
+    type: 'number',
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Filter out unpublished items"|t('bee'),
+    instructions: "Adds a live-content filter to every request. The catalog is push-based and can lag; without this the first symptom of a sync problem is recommending something that was unpublished an hour ago."|t('bee'),
+    id: 'filterLive',
+    name: 'filterLive',
+    on: settings.filterLive,
+  }) }}
+
+  {{ forms.selectField({
+    label: "Minimum relevance"|t('bee'),
+    id: 'minRelevance',
+    name: 'minRelevance',
+    options: [
+      { label: "Recombee’s default"|t('bee'), value: '' },
+      { label: "Low"|t('bee'), value: 'low' },
+      { label: "Medium"|t('bee'), value: 'medium' },
+      { label: "High"|t('bee'), value: 'high' },
+    ],
+    value: settings.minRelevance,
+    instructions: "Higher means fewer, better recommendations — and sometimes none at all."|t('bee'),
+  }) }}
+
+  {{ forms.textField({
+    label: "Rotation rate"|t('bee'),
+    instructions: "0–1. How hard to avoid re-showing something the visitor has already seen."|t('bee'),
+    id: 'rotationRate',
+    name: 'rotationRate',
+    value: settings.rotationRate,
+    size: 5,
+  }) }}
+
+  {{ forms.textField({
+    label: "Rotation time"|t('bee'),
+    id: 'rotationTime',
+    name: 'rotationTime',
+    value: settings.rotationTime,
+    size: 8,
+    type: 'number',
+    unit: "seconds"|t('bee'),
+  }) }}
+
+  {{ forms.lightswitchField({
+    label: "Attribution ledger"|t('bee') ~ (isPro ? '' : ' — ' ~ proTip),
+    instructions: "Record which recommendation put an item in front of a visitor, so the click or purchase that follows can be attributed to it. This is the only way Recombee can score — or learn from — its own suggestions."|t('bee'),
+    id: 'attribution',
+    name: 'attribution',
+    on: settings.attribution,
+    disabled: not isPro,
+  }) }}
+
+  <hr>
+
+  <h2>{{ "Diagnostics"|t('bee') }}</h2>
+
+  {{ forms.lightswitchField({
+    label: "Dry run"|t('bee'),
+    instructions: "Build and log every request, but send nothing. The way to see exactly what would be pushed before pointing Bee at a real database."|t('bee'),
+    id: 'dryRun',
+    name: 'dryRun',
+    on: settings.dryRun,
+  }) }}
+
+  {{ forms.selectField({
+    label: "Log"|t('bee'),
+    id: 'logMode',
+    name: 'logMode',
+    options: [
+      { label: "Failures only"|t('bee'), value: 'errors' },
+      { label: "Every request"|t('bee'), value: 'all' },
+      { label: "Nothing"|t('bee'), value: 'none' },
+    ],
+    value: settings.logMode,
+  }) }}
+
+  {{ forms.textField({
+    label: "Keep log entries for"|t('bee'),
+    id: 'logRetentionDays',
+    name: 'logRetentionDays',
+    value: settings.logRetentionDays,
+    size: 5,
+    type: 'number',
+    unit: "days"|t('bee'),
+  }) }}
+
+  {{ forms.textField({
+    label: "Request timeout"|t('bee'),
+    id: 'timeout',
+    name: 'timeout',
+    value: settings.timeout,
+    size: 7,
+    type: 'number',
+    unit: 'ms',
+  }) }}
+
+  {{ forms.textField({
+    label: "Recommendation timeout"|t('bee'),
+    instructions: "Kept short on purpose: recommendations render into a page, so a slow recommender must degrade to no recommendations rather than to a slow page."|t('bee'),
+    id: 'recommendTimeout',
+    name: 'recommendTimeout',
+    value: settings.recommendTimeout,
+    size: 7,
+    type: 'number',
+    unit: 'ms',
+  }) }}
+
+  {{ forms.textField({
+    label: "Retries"|t('bee'),
+    instructions: "Applied to connection failures, 5xx and 429 only. A 4xx will fail identically forever."|t('bee'),
+    id: 'retries',
+    name: 'retries',
+    value: settings.retries,
+    size: 4,
+    type: 'number',
+  }) }}
+
+</div>
+
+{% js %}
+// The settings screen is already inside Craft's own <form>, so this posts on its own rather than
+// nesting a second one — a nested form silently swallows the outer one's submit in every browser.
+document.getElementById('bee-test').addEventListener('click', function() {
+  var button = this;
+  var result = document.getElementById('bee-test-result');
+  button.classList.add('loading');
+  result.textContent = '';
+
+  Craft.sendActionRequest('POST', 'bee/diagnostics/test', {})
+    .then(function(response) {
+      result.textContent = response.data.message;
+      result.style.color = response.data.success ? '' : '#CF1124';
+    })
+    .catch(function(error) {
+      result.textContent = (error.response && error.response.data && error.response.data.message) || 'Request failed.';
+      result.style.color = '#CF1124';
+    })
+    .finally(function() {
+      button.classList.remove('loading');
+    });
+});
+{% endjs %}

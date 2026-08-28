@@ -1,0 +1,86 @@
+{% extends "_layouts/cp" %}
+
+{% set title = "Connection log"|t('bee') %}
+{% set selectedSubnavItem = 'log' %}
+
+{% block actionButton %}
+  <button type="button" class="btn" id="bee-clear-log">{{ "Clear"|t('bee') }}</button>
+{% endblock %}
+
+{% block content %}
+
+  <div class="pane" style="display:flex; gap:24px; flex-wrap:wrap;">
+    <div>
+      <div class="light smalltext">{{ "Requests (24h)"|t('bee') }}</div>
+      <div style="font-size:28px; line-height:1.1;">{{ stats.total }}</div>
+    </div>
+    <div>
+      <div class="light smalltext">{{ "Failures (24h)"|t('bee') }}</div>
+      <div style="font-size:28px; line-height:1.1;" {% if stats.failures > 0 %}class="error"{% endif %}>{{ stats.failures }}</div>
+    </div>
+    <div>
+      <div class="light smalltext">{{ "Average"|t('bee') }}</div>
+      <div style="font-size:28px; line-height:1.1;">{{ stats.avgMs }}ms</div>
+    </div>
+    <div style="flex:1"></div>
+    <div>
+      <a class="btn{{ filter == '' ? ' active' : '' }}" href="{{ url('bee/log') }}">{{ "All"|t('bee') }}</a>
+      <a class="btn{{ filter == 'failures' ? ' active' : '' }}" href="{{ url('bee/log', { filter: 'failures' }) }}">{{ "Failures"|t('bee') }}</a>
+    </div>
+  </div>
+
+  {% if plugin.settings.logMode == 'none' %}
+    <div class="pane"><p class="light">{{ "Logging is switched off in settings, so nothing new is being recorded."|t('bee') }}</p></div>
+  {% elseif plugin.settings.logMode == 'errors' %}
+    <p class="light">{{ "Only failures are being recorded. Switch the log to “Every request” in settings while you are setting things up."|t('bee') }}</p>
+  {% endif %}
+
+  {% if entries|length %}
+    <table class="data fullwidth">
+      <thead>
+        <tr>
+          <th>{{ "When"|t('bee') }}</th>
+          <th>{{ "What"|t('bee') }}</th>
+          <th>{{ "Status"|t('bee') }}</th>
+          <th class="thin">{{ "Time"|t('bee') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            <td class="light" style="white-space:nowrap">{{ entry.dateCreated|datetime('short') }}</td>
+            <td>
+              <span class="code">{{ entry.label ?: (entry.method ~ ' ' ~ entry.path) }}</span>
+              {% if entry.error %}<div class="error smalltext">{{ entry.error }}</div>{% endif %}
+            </td>
+            <td>
+              <span class="status {{ entry.success ? 'green' : 'red' }}"></span>
+              {{ entry.status ?: '—' }}
+            </td>
+            <td class="light">{{ entry.durationMs|number_format(0) }}ms</td>
+            <td class="thin"><a href="{{ url('bee/log/' ~ entry.id) }}">{{ "Detail"|t('bee') }}</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if pages > 1 %}
+      <div class="pane" style="text-align:center">
+        {% if page > 1 %}<a class="btn" href="{{ url('bee/log', { page: page - 1, filter: filter }) }}">{{ "Newer"|t('bee') }}</a>{% endif %}
+        <span class="light">{{ "Page {n} of {total}"|t('bee', { n: page, total: pages }) }}</span>
+        {% if page < pages %}<a class="btn" href="{{ url('bee/log', { page: page + 1, filter: filter }) }}">{{ "Older"|t('bee') }}</a>{% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="pane zilch"><p>{{ "Nothing logged."|t('bee') }}</p></div>
+  {% endif %}
+
+{% endblock %}
+
+{% js %}
+document.getElementById('bee-clear-log').addEventListener('click', function() {
+  if (!confirm(Craft.t('bee', 'Clear the whole log?'))) return;
+  Craft.sendActionRequest('POST', 'bee/log/clear', {}).then(function() { location.reload(); });
+});
+{% endjs %}

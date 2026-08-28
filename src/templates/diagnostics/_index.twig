@@ -1,0 +1,102 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms.twig" as forms %}
+
+{% set title = "Diagnostics"|t('bee') %}
+{% set selectedSubnavItem = 'diagnostics' %}
+
+{% block content %}
+
+  <div class="pane">
+    {% if worst == 'ok' %}
+      <p><span class="status green"></span> <strong>{{ "Everything checks out."|t('bee') }}</strong></p>
+    {% elseif worst == 'warning' %}
+      <p><span class="status orange"></span> <strong>{{ "Working, with things worth fixing."|t('bee') }}</strong></p>
+    {% else %}
+      <p><span class="status red"></span> <strong>{{ "Something is stopping Bee from working."|t('bee') }}</strong></p>
+    {% endif %}
+    <p class="light">{{ "The same checks run from the console as `php craft bee/diagnostics/check`, which exits non-zero on an error so it can gate a deploy."|t('bee') }}</p>
+  </div>
+
+  <table class="data fullwidth">
+    <tbody>
+      {% for check in checks %}
+        <tr>
+          <td class="thin" style="vertical-align:top; padding-top:14px;">
+            <span class="status {{ check.status == 'ok' ? 'green' : (check.status == 'warning' ? 'orange' : (check.status == 'error' ? 'red' : '')) }}"></span>
+          </td>
+          <td style="width:200px; vertical-align:top;"><strong>{{ check.label }}</strong></td>
+          <td>
+            {{ check.message }}
+            {% if check.fix and check.status != 'ok' %}
+              <div class="light smalltext" style="margin-top:4px;">→ {{ check.fix }}</div>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if commerce and canManage %}
+    <hr>
+    <h2>{{ "Historic orders"|t('bee') }}</h2>
+    <p class="light">
+      {{ "A brand-new Recombee database knows nothing and recommends accordingly, while this install is sitting on years of orders. Replaying them is the fastest route to useful recommendations."|t('bee') }}
+    </p>
+    {% if plugin.isPro() %}
+      <p class="light">{{ "Safe to run more than once: each purchase carries its order’s original timestamp, so a second pass is refused as a duplicate rather than doubling everyone’s history."|t('bee') }}</p>
+      <p>
+        <input type="text" class="text" id="bee-backfill-since" placeholder="2024-01-01" size="12">
+        <button type="button" class="btn submit" id="bee-backfill">{{ "Queue backfill"|t('bee') }}</button>
+        <span class="light" style="margin-left:8px;">{{ "Leave the date empty for everything."|t('bee') }}</span>
+      </p>
+    {% else %}
+      <p class="light">{{ "Backfilling historic orders is a Pro feature."|t('bee') }}</p>
+    {% endif %}
+  {% endif %}
+
+  {% if report|length %}
+    <hr>
+    <h2>{{ "Recommendations handed out (30 days)"|t('bee') }}</h2>
+    <table class="data fullwidth">
+      <thead>
+        <tr>
+          <th>{{ "Scenario"|t('bee') }}</th>
+          <th>{{ "Kind"|t('bee') }}</th>
+          <th>{{ "Sets"|t('bee') }}</th>
+          <th>{{ "People"|t('bee') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report %}
+          <tr>
+            <td class="code">{{ row.scenario }}</td>
+            <td class="light">{{ row.kind }}</td>
+            <td>{{ row.sets }}</td>
+            <td>{{ row.users }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="light">{{ "Click-through and revenue per scenario live in the Recombee console, which can report them because Bee attaches the recommId to the interactions that follow."|t('bee') }}</p>
+  {% endif %}
+
+{% endblock %}
+
+{% js %}
+(function() {
+  var button = document.getElementById('bee-backfill');
+  if (!button) return;
+
+  button.addEventListener('click', function() {
+    button.classList.add('loading');
+    Craft.sendActionRequest('POST', 'bee/diagnostics/backfill', {
+      data: { since: document.getElementById('bee-backfill-since').value }
+    })
+      .then(function(r) { Craft.cp.displayNotice(r.data.message); })
+      .catch(function(e) {
+        Craft.cp.displayError((e.response && e.response.data && e.response.data.message) || Craft.t('bee', 'Could not queue the backfill.'));
+      })
+      .finally(function() { button.classList.remove('loading'); });
+  });
+})();
+{% endjs %}

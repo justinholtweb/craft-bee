@@ -1,0 +1,57 @@
+{
+    "name": "justinholtweb/craft-bee",
+    "description": "Recombee recommendations for Craft CMS and Craft Commerce — catalog sync, interaction tracking, personalised recommendations and search, without writing a line of API code.",
+    "version": "5.0.0",
+    "type": "craft-plugin",
+    "keywords": [
+        "craftcms",
+        "craft-plugin",
+        "craft-commerce",
+        "commerce",
+        "recombee",
+        "recommendations",
+        "personalization",
+        "search"
+    ],
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Justin Holt",
+            "homepage": "https://justinholt.com"
+        }
+    ],
+    "support": {
+        "email": "justin@justinholt.com"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*",
+        "craftcms/cms": "^5.3.0"
+    },
+    "suggest": {
+        "craftcms/commerce": "Sync products and variants, track the order funnel, and recommend across the catalog."
+    },
+    "autoload": {
+        "psr-4": {
+            "justinholtweb\\bee\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "craftcms/plugin-installer": true,
+            "yiisoft/yii2-composer": true
+        }
+    },
+    "extra": {
+        "name": "Bee",
+        "handle": "bee",
+        "developer": "Justin Holt",
+        "developerUrl": "https://justinholt.com",
+        "documentationUrl": "https://github.com/justinholtweb/craft-bee/blob/main/README.md",
+        "changelogUrl": "https://raw.githubusercontent.com/justinholtweb/craft-bee/main/CHANGELOG.md",
+        "class": "justinholtweb\\bee\\Plugin",
+        "editions": ["lite", "pro"]
+    }
+}

@@ -1,0 +1,230 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms.twig" as forms %}
+
+{% set title = "Catalog"|t('bee') %}
+{% set selectedSubnavItem = 'catalog' %}
+
+{% block actionButton %}
+  {% if canManage and not readOnly %}
+    <div class="btngroup">
+      <button type="button" class="btn submit" data-bee-sync>{{ "Sync everything"|t('bee') }}</button>
+      <div class="btn submit menubtn"></div>
+      <div class="menu">
+        <ul>
+          <li><a data-bee-sync data-force>{{ "Re-send everything (ignore fingerprints)"|t('bee') }}</a></li>
+          <li><a data-bee-properties>{{ "Sync item properties"|t('bee') }}</a></li>
+          <li><a data-bee-purge class="error">{{ "Purge excluded and failed items"|t('bee') }}</a></li>
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+  {% if not plugin.settings.isConfigured() %}
+    <div class="pane">
+      <p class="error">{{ "Bee is not connected to a Recombee database yet."|t('bee') }}</p>
+      <p><a class="btn submit" href="{{ url('settings/plugins/bee') }}">{{ "Open settings"|t('bee') }}</a></p>
+    </div>
+  {% endif %}
+
+  <div class="pane" style="display:flex; gap:24px; flex-wrap:wrap;">
+    {% set tiles = [
+      { label: 'Synced'|t('bee'), value: counts.synced ?? 0 },
+      { label: 'Pending'|t('bee'), value: counts.pending ?? 0 },
+      { label: 'Failed'|t('bee'), value: counts.failed ?? 0 },
+      { label: 'Removed'|t('bee'), value: counts.deleted ?? 0 },
+    ] %}
+    {% for tile in tiles %}
+      <div>
+        <div class="light smalltext">{{ tile.label }}</div>
+        <div style="font-size:28px; line-height:1.1;">{{ tile.value }}</div>
+      </div>
+    {% endfor %}
+    <div style="flex:1"></div>
+    <div>
+      <div class="light smalltext">{{ "Declared properties"|t('bee') }}</div>
+      <div style="font-size:28px; line-height:1.1;">{{ declared.properties|length }}</div>
+    </div>
+  </div>
+
+  {% if declared.conflicts|length %}
+    <div class="pane">
+      <p class="error">
+        {{ "Two sources disagree about the type of: {names}. Recombee has one property namespace per database, so a property can only have one type."|t('bee', { names: declared.conflicts|keys|join(', ') }) }}
+      </p>
+    </div>
+  {% endif %}
+
+  <h2>{{ "Sources"|t('bee') }}</h2>
+
+  {% if sources|length %}
+    <table class="data fullwidth">
+      <thead>
+        <tr>
+          <th>{{ "Name"|t('bee') }}</th>
+          <th>{{ "Element type"|t('bee') }}</th>
+          <th>{{ "Scope"|t('bee') }}</th>
+          <th>{{ "Properties"|t('bee') }}</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source in sources %}
+          <tr data-uid="{{ source.uid }}">
+            <td>
+              <a href="{{ url('bee/catalog/' ~ source.uid) }}">{{ source.name }}</a>
+              {% if not source.enabled %}<span class="status off" title="{{ 'Disabled'|t('bee') }}"></span>{% endif %}
+            </td>
+            <td class="light">{{ source.getElementDisplayName() }}</td>
+            <td class="light">
+              {{ source.groupUids|length ? "{n} group(s)"|t('bee', { n: source.groupUids|length }) : "Everything"|t('bee') }}
+              {%- if source.typeUids|length %}, {{ "{n} type(s)"|t('bee', { n: source.typeUids|length }) }}{% endif %}
+            </td>
+            <td class="light">{{ source.declaredProperties()|length }}</td>
+            <td class="thin">
+              {% if canManage and not readOnly %}
+                <button type="button" class="btn small" data-bee-sync data-uid="{{ source.uid }}">{{ "Sync"|t('bee') }}</button>
+              {% endif %}
+            </td>
+            <td class="thin">
+              {% if canManage and not readOnly %}
+                <a class="delete icon" title="{{ 'Delete'|t('bee') }}" data-bee-delete data-uid="{{ source.uid }}"></a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="pane zilch">
+      <p>{{ "No catalog sources yet. A source says which elements become Recombee items, and what Recombee is told about them."|t('bee') }}</p>
+    </div>
+  {% endif %}
+
+  {% if canManage and not readOnly %}
+    <p><a class="btn add icon" href="{{ url('bee/catalog/new') }}">{{ "New source"|t('bee') }}</a></p>
+  {% elseif readOnly %}
+    <p class="light">{{ "Sources live in project config, which is read-only because allowAdminChanges is off."|t('bee') }}</p>
+  {% endif %}
+
+  <hr>
+
+  <h2>{{ "Preview a payload"|t('bee') }}</h2>
+  <p class="light">{{ "Shows exactly what Bee would send for one element — built by the same method the sync uses, so this is the payload, not an approximation of it."|t('bee') }}</p>
+
+  {{ forms.elementSelect({
+    id: 'bee-preview-element',
+    name: 'previewElement',
+    elementType: 'craft\\elements\\Entry',
+    limit: 1,
+    selectionLabel: "Choose an element"|t('bee'),
+    sources: '*',
+  }) }}
+
+  <p>
+    <button type="button" class="btn" id="bee-preview-go">{{ "Preview"|t('bee') }}</button>
+    <span id="bee-preview-note" class="light" style="margin-left:8px;"></span>
+  </p>
+  <pre id="bee-preview-out" class="code" style="display:none; padding:12px; background:#f3f7fc; border-radius:5px; overflow:auto; max-height:420px;"></pre>
+
+  {% if recent|length %}
+    <hr>
+    <h2>{{ "Recently synced"|t('bee') }}</h2>
+    <table class="data fullwidth">
+      <thead>
+        <tr>
+          <th>{{ "Item"|t('bee') }}</th>
+          <th>{{ "Type"|t('bee') }}</th>
+          <th>{{ "Status"|t('bee') }}</th>
+          <th>{{ "When"|t('bee') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in recent %}
+          <tr>
+            <td class="code">{{ row.itemId }}</td>
+            <td class="light">{{ row.elementType|split('\\')|last }}</td>
+            <td>
+              <span class="status {{ row.status == 'synced' ? 'green' : (row.status == 'failed' ? 'red' : 'orange') }}"></span>
+              {{ row.status }}
+              {%- if row.error %}<div class="light smalltext">{{ row.error }}</div>{% endif %}
+            </td>
+            <td class="light">{{ row.syncedAt ? row.syncedAt|datetime('short') : '—' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+{% endblock %}
+
+{% js %}
+(function() {
+  function post(action, data, done) {
+    Craft.sendActionRequest('POST', action, { data: data })
+      .then(function(r) {
+        Craft.cp.displayNotice(r.data.message || Craft.t('bee', 'Done.'));
+        if (done) done(r);
+      })
+      .catch(function(e) {
+        var msg = (e.response && e.response.data && (e.response.data.message || e.response.data.error)) || Craft.t('bee', 'Something went wrong.');
+        Craft.cp.displayError(msg);
+      });
+  }
+
+  // Buttons post on their own rather than living in a <form>: a CP template that nests a form
+  // inside Craft's own breaks the outer submit.
+  document.querySelectorAll('[data-bee-sync]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      post('bee/catalog/sync', {
+        uid: el.getAttribute('data-uid') || '',
+        force: el.hasAttribute('data-force') ? 1 : 0
+      });
+    });
+  });
+
+  var props = document.querySelector('[data-bee-properties]');
+  if (props) props.addEventListener('click', function() { post('bee/catalog/sync-properties', {}); });
+
+  var purge = document.querySelector('[data-bee-purge]');
+  if (purge) purge.addEventListener('click', function() {
+    if (confirm(Craft.t('bee', 'Delete every excluded and failed item from Recombee? Their interaction history goes with them.'))) {
+      post('bee/catalog/purge', {});
+    }
+  });
+
+  document.querySelectorAll('[data-bee-delete]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      if (!confirm(Craft.t('bee', 'Delete this source? Items already in Recombee are left alone until you purge.'))) return;
+      post('bee/catalog/delete-source', { uid: el.getAttribute('data-uid') }, function() { location.reload(); });
+    });
+  });
+
+  document.getElementById('bee-preview-go').addEventListener('click', function() {
+    var input = document.querySelector('#bee-preview-element input[name="previewElement[]"]');
+    var out = document.getElementById('bee-preview-out');
+    var note = document.getElementById('bee-preview-note');
+
+    if (!input || !input.value) {
+      note.textContent = Craft.t('bee', 'Choose an element first.');
+      return;
+    }
+
+    note.textContent = '';
+    Craft.sendActionRequest('POST', 'bee/catalog/preview', { data: { elementId: input.value } })
+      .then(function(r) {
+        if (!r.data.success) {
+          out.style.display = 'none';
+          note.textContent = r.data.error;
+          return;
+        }
+        note.textContent = r.data.itemId + '  ·  ' + r.data.source + (r.data.included ? '' : '  ·  ' + Craft.t('bee', 'excluded right now'));
+        out.textContent = r.data.json;
+        out.style.display = 'block';
+      });
+  });
+})();
+{% endjs %}
