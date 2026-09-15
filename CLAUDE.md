@@ -163,16 +163,20 @@ that imports one. Both suites are idempotent and restore sources, rows, edition 
 
 ## Marketing assets
 
-- `promos/` — the Plugin Store deck. `./build.sh` renders nine 1920×1080 slides from `slides.html`
-  in headless Chrome. `assets/icon.svg` is a straight copy of `src/icon.svg` and
+- `~/Sites/craft-bee-website/promos/` — the Plugin Store deck. It lives in the *website* repo, not
+  here: a plugin with its own domain keeps its deck beside its site, and only the plugins that live
+  as a page on justinholt.com keep theirs in the plugin repo. `./build.sh` renders nine 1920×1080
+  slides in headless Chrome. Its `assets/icon.svg` is a straight copy of `src/icon.svg` and its
   `assets/watermark.svg` is `src/icon-mask.svg` with the fill switched to white: **three files, one
-  geometry.** See `promos/README.md`.
+  geometry** — change the icon and change all three.
 - `tests/shots/` — drives `~/Sites/plugin-testing` into a state worth photographing, against a
   stand-in Recombee API running in the container. Bee's own client does the talking, so the sync
   table, the connection log and the ledger are filled by Bee rather than by fixtures. See
   `tests/shots/README.md`.
-- `~/Sites/craft-bee-website` — the marketing site. The palette is measured off the icon; the Pro
-  price lives in four places and `promos/README.md` lists them.
+- `~/Sites/craft-bee-website` — the marketing site, at **craft-bee.com**. Bee is an own-domain
+  plugin, so it is listed in `craft-plugin-registry/plugins.json` and does **not** get a page in the
+  justinholt.com repo — that repo's `scripts/seed/plugin-pages/` is the other tier. The palette is
+  measured off the icon; the Pro price lives in four places and `promos/README.md` lists them.
 
 The icon is hand-authored, not traced: `src/icon.svg` is a rounded `<rect>` plus a group of closed
 paths with real gaps between them, which is what lets the same path data drop into

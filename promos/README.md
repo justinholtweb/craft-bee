@@ -4,6 +4,10 @@ Marketing images for the Bee listing on the Craft Plugin Store, rendered in the 
 plugin's marketing page at
 [justinholt.com/plugins/craft-bee](https://justinholt.com/plugins/craft-bee).
 
+They live in the plugin repo, not beside a site, because Bee is one of the plugins that lives as a
+page on justinholt.com rather than on its own domain. The plugins with their own domain keep their
+deck in their `craft-*-website` repo instead.
+
 ## Building
 
 ```bash
@@ -31,9 +35,8 @@ downsampled so the type stays crisp).
 ## The cover badge quotes the price
 
 `Lite free · Pro $149` — the same form Bird, Bandage and Bouncer use. **A pricing change has to reach
-four places:** this badge, the marketing site (`_partials/hero.twig`, `_partials/cta-banner.twig`,
-`_partials/pricing.twig`, the FAQ, `_layouts/base.twig`'s schema.org offers, and `docs/editions.twig`),
-the repo's `README.md`, and the edition prices at `id.craftcms.com`.
+four places:** this badge, the justinholt.com page seed (`scripts/seed/plugin-pages/craft-bee.json`), this repo's
+`README.md`, and the edition prices at `id.craftcms.com`.
 
 ## Notes
 
@@ -79,5 +82,5 @@ Chrome's `file://` origin rules block them otherwise. It is gitignored; don't ed
 
 `shots/` is copied from `plugin-shots/out/bee/`. They are real captures of a real install, not
 mockups: `~/Sites/plugin-testing` with Bee connected, 169 items synced and the order history
-backfilled. See `../tests/tmp/README.md` for how that install is driven without a live Recombee
+backfilled. See `../tests/shots/README.md` for how that install is driven without a live Recombee
 database.
