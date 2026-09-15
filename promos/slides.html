@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<!-- handmade: hand-tuned deck -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bee — Plugin Store promos</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #130f07;
+    --ink-light: #1b1509;
+    --ink-lighter: #2e2412;
+    --accent: #C1953D;
+    --accent-light: #E3BC6A;
+    --brass: #F6E2B0;
+    --green: #4ade80;
+    --off-white: #f6f2e9;
+  }
+
+  html { background: #000; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--off-white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- slide shell ---------------------------------------------------- */
+  .slide {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 85% 15%, rgba(193, 149, 61, 0.30) 0%, transparent 40%),
+      radial-gradient(ellipse at 65% 5%,  rgba(227, 188, 106, 0.12) 0%, transparent 35%),
+      radial-gradient(ellipse at 15% 85%, rgba(246, 226, 176, 0.06) 0%, transparent 40%),
+      radial-gradient(ellipse at 35% 95%, rgba(193, 149, 61, 0.10) 0%, transparent 35%),
+      linear-gradient(135deg, #130f07 0%, #1b1509 30%, #241c0e 60%, #130f07 100%);
+  }
+
+  /* Oversized watermark, echoing the app icon.
+
+     The bee is a wide, airy silhouette rather than a dense one — four wings and three gaps
+     across the abdomen — so it survives a larger crop than Bouncer's figure does without
+     reading as an object sitting behind the headline. 1080px at left -17% puts the left wing
+     off the edge and leaves the body and one wing carrying. 0.020 — the family's filled-mark
+     opacity — was still legible as a bee sitting behind the headline, because this mark is both
+     large and light against a dark ground; 0.013 was still legible on the centred slides, where the left half of the canvas is empty; 0.009 puts it under the threshold. */
+  .slide::after {
+    content: '';
+    position: absolute;
+    top: -2%;
+    left: -17%;
+    width: 1080px;
+    height: 1080px;
+    background: url('assets/watermark.svg') no-repeat center / contain;
+    opacity: 0.009;
+    pointer-events: none;
+  }
+
+  /* Hairline along the top edge */
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--brass), var(--accent));
+    z-index: 5;
+  }
+
+  .inner {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    padding: 118px 130px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ---- type ------------------------------------------------------------ */
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(246, 242, 233, 0.62);
+    margin-bottom: 34px;
+  }
+  .eyebrow .rule { width: 58px; height: 3px; border-radius: 2px; background: var(--accent-light); }
+
+  h1, h2 {
+    font-family: 'Jersey 20', sans-serif;
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.005em;
+  }
+
+  .gradient-text {
+    background: linear-gradient(100deg, #C1953D 0%, #E3BC6A 38%, #F6E2B0 68%, #C1953D 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .lede { font-size: 34px; line-height: 1.5; color: rgba(246, 242, 233, 0.72); }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; }
+
+  /* ---- cover slide ----------------------------------------------------- */
+  .cover .inner { gap: 90px; }
+  .cover .copy { flex: 1 1 auto; }
+  .cover h1 { font-size: 250px; margin-bottom: 26px; }
+  .cover .tagline {
+    font-family: 'Jersey 20', sans-serif;
+    font-size: 60px;
+    line-height: 1.02;
+    color: var(--off-white);
+    margin-bottom: 40px;
+    max-width: 15ch;
+  }
+  .cover .lede { max-width: 27ch; font-size: 30px; }
+
+  .cover .mark {
+    flex: 0 0 auto;
+    width: 460px;
+    height: 460px;
+    filter: drop-shadow(14px 14px 0 rgba(0, 0, 0, 0.35));
+  }
+  .cover .mark img { width: 100%; height: 100%; display: block; }
+
+  .badges { display: flex; gap: 16px; margin-top: 52px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 26px;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(246, 242, 233, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+  }
+  .badge .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-light); }
+  .badge.price .dot { background: var(--brass); }
+
+  /* ---- the before/after statement -------------------------------------- */
+  .statement .inner { flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .statement .eyebrow { justify-content: center; }
+  .swap { display: flex; flex-direction: column; align-items: center; gap: 22px; margin-top: 8px; }
+  .swap .caption {
+    font-size: 26px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(246, 242, 233, 0.42);
+  }
+  .swap .before {
+    font-size: 40px;
+    white-space: nowrap;
+    color: rgba(246, 242, 233, 0.34);
+    letter-spacing: 0.01em;
+  }
+  .swap .arrow {
+    width: 4px; height: 62px; border-radius: 2px;
+    background: linear-gradient(180deg, rgba(227,188,106,0.15), var(--accent-light));
+    position: relative;
+  }
+  .swap .arrow::after {
+    content: '';
+    position: absolute;
+    left: 50%; bottom: -4px;
+    width: 18px; height: 18px;
+    transform: translateX(-50%) rotate(45deg);
+    border-right: 4px solid var(--accent-light);
+    border-bottom: 4px solid var(--accent-light);
+    border-radius: 2px;
+  }
+  .swap .after { font-size: 68px; line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
+  .statement .lede { margin-top: 40px; max-width: 42ch; font-size: 32px; }
+
+  /* ---- feature slides -------------------------------------------------- */
+  .feature .inner { align-items: center; }
+  .feature .copy { width: 780px; flex: 0 0 780px; }
+  .feature h2 { font-size: 108px; margin-bottom: 30px; }
+  .feature .lede { max-width: 21ch; }
+
+  .points { list-style: none; margin-top: 44px; display: flex; flex-direction: column; gap: 18px; }
+  .points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    font-size: 25px;
+    line-height: 1.4;
+    color: rgba(246, 242, 233, 0.6);
+  }
+  .points li .tick {
+    flex: 0 0 auto; margin-top: 9px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent-light);
+  }
+  /* The li is a flex container, so an inline <span class="mono"> left loose in the text becomes
+     a sibling flex item and picks up the 16px gap on both sides. Every point keeps its text in
+     one .t. Keep each point to one line — about 55 characters at 25px in a 780px column. A
+     second line runs at the panel, which starts at left: 900px, and the two simply overlap. */
+  .points li .t { flex: 1 1 auto; }
+
+  /* Right-hand panel shared by the source, funnel, calls and ledger slides */
+  .panel {
+    position: absolute;
+    top: 50%;
+    left: 900px;
+    right: 130px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ---- the three parts of a source ------------------------------------- */
+  .parts { display: flex; flex-direction: column; gap: 20px; }
+  .part {
+    padding: 28px 34px;
+    border-radius: 16px;
+    background: rgba(46, 36, 18, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .part .label {
+    font-size: 19px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent-light); margin-bottom: 14px;
+  }
+  .part .said { font-size: 30px; color: var(--off-white); margin-bottom: 10px; }
+  .part .said b { color: var(--brass); font-weight: 400; }
+  .part .also { font-size: 21px; line-height: 1.45; color: rgba(246, 242, 233, 0.42); }
+
+  /* ---- the funnel, step by step ---------------------------------------- */
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step {
+    display: flex; align-items: baseline; gap: 26px;
+    padding: 26px 34px; border-radius: 14px;
+    background: rgba(46, 36, 18, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .step .n { flex: 0 0 46px; font-size: 30px; color: var(--brass); }
+  .step .t { flex: 1 1 auto; font-size: 25px; line-height: 1.4; color: rgba(246, 242, 233, 0.72); }
+  .step .t b { color: var(--off-white); font-weight: 600; }
+
+  /* ---- the four calls --------------------------------------------------- */
+  .places { display: flex; flex-wrap: wrap; gap: 22px; }
+  .place {
+    flex: 1 1 calc(50% - 11px);
+    padding: 34px 32px; border-radius: 18px;
+    background: rgba(46, 36, 18, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  /* No text-transform here, unlike the rest of the family's chips: these carry Twig calls, and
+     upper-casing them destroys the camelCase that is the point of showing them. */
+  .place .chip {
+    display: inline-block; margin-bottom: 18px;
+    padding: 7px 16px; border-radius: 999px;
+    font-size: 19px; letter-spacing: 0.01em;
+    color: var(--accent-light); background: rgba(193, 149, 61, 0.28);
+  }
+  .place .where { font-size: 27px; font-weight: 600; color: var(--off-white); margin-bottom: 14px; }
+  .place .what { font-size: 21px; line-height: 1.45; color: rgba(246, 242, 233, 0.5); }
+
+  /* ---- ledger rows ------------------------------------------------------ */
+  .finds { display: flex; flex-direction: column; gap: 16px; }
+  .find {
+    display: flex; align-items: center; gap: 26px;
+    padding: 26px 34px; border-radius: 16px;
+    background: rgba(46, 36, 18, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .find .vol { flex: 0 0 250px; font-size: 24px; color: var(--brass); letter-spacing: 0.02em; }
+  .find .what { flex: 1 1 auto; font-size: 23px; color: rgba(246, 242, 233, 0.66); }
+  .find .sev { flex: 0 0 auto; font-size: 19px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green); }
+  /* Emphasis is carried by colour, never by a border style — a dashed 1px border does not
+     survive the downsample from 3840 to 1920. */
+  .find.bad { border-color: rgba(227, 188, 106, 0.55); background: rgba(193, 149, 61, 0.20); }
+  .find.bad .what { color: var(--off-white); }
+  .find.warn .sev { color: var(--brass); }
+
+  /* ---- terminal --------------------------------------------------------- */
+  .term {
+    position: absolute; top: 50%; left: 900px; right: -110px;
+    transform: translateY(-50%);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .term .chrome {
+    height: 44px; background: #2e2412;
+    background-image:
+      radial-gradient(circle at 26px 22px, #ff5f57 6.5px, transparent 7px),
+      radial-gradient(circle at 52px 22px, #ffbd2e 6.5px, transparent 7px),
+      radial-gradient(circle at 78px 22px, #28ca42 6.5px, transparent 7px);
+  }
+  .term .body {
+    background: #17110a; padding: 40px 44px;
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 23px; line-height: 1.85;
+  }
+  .term .prompt { color: var(--accent-light); }
+  .term .cmd { color: var(--off-white); }
+  .term .out { color: rgba(246, 242, 233, 0.45); }
+  .term .ok { color: var(--green); }
+  .term .warn { color: var(--brass); }
+  .term .err { color: #ff8f7e; }
+  .term .blank { display: block; height: 18px; }
+
+  /* ---- footer lockup --------------------------------------------------- */
+  .footer {
+    position: absolute; left: 130px; bottom: 62px; z-index: 3;
+    display: flex; align-items: center; gap: 18px;
+    font-size: 22px; letter-spacing: 0.06em;
+    color: rgba(246, 242, 233, 0.4);
+  }
+  .footer img { width: 40px; height: 40px; border-radius: 9px; }
+  .footer b { color: rgba(246, 242, 233, 0.72); font-weight: 600; }
+
+  /* Only render the requested slide when screenshotting */
+  body.single .slide { display: none; }
+  body.single .slide.active { display: block; }
+
+  /* ---- control-panel screenshot cards ----------------------------------
+     Self-contained: these cards must drop into any deck in the family, and the decks do not
+     share a class system. Only --accent-light and --off-white are relied on, both of which
+     every deck defines, and both have fallbacks. */
+  .slide.cpcard { display: block; }
+  .cpcard .cpc-inner {
+    position: relative; z-index: 2; height: 100%;
+    padding: 112px 120px; display: flex; align-items: center; gap: 70px;
+  }
+  .cpcard .cpc-copy { width: 660px; flex: 0 0 660px; }
+
+  .cpcard .cpc-eyebrow {
+    display: flex; align-items: center; gap: 20px; margin-bottom: 34px;
+    font-size: 21px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--accent-light, #7aa2c8);
+  }
+  .cpcard .cpc-eyebrow i {
+    display: block; width: 62px; height: 3px;
+    background: var(--accent-light, #7aa2c8); border-radius: 2px;
+  }
+  .cpcard .cpc-h2 {
+    font-family: 'Jersey 20', 'Inter', sans-serif;
+    font-size: 88px; line-height: 0.96; font-weight: 400; letter-spacing: 0.005em;
+    margin: 0 0 28px; color: var(--off-white, #f0f0f5);
+  }
+  .cpcard .cpc-lede { font-size: 33px; line-height: 1.42; color: rgba(246, 242, 233, 0.66); margin: 0; }
+
+  .cpcard .cpc-panel { flex: 1 1 auto; min-width: 0; }
+  .cpcard .cpc-frame {
+    border-radius: 14px; overflow: hidden; background: #e4edf6;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+  .cpcard .cpc-chrome {
+    display: flex; align-items: center; gap: 9px; padding: 13px 18px;
+    background: linear-gradient(180deg, #2a2a3d 0%, #21212f 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  }
+  .cpcard .cpc-chrome b { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.16); }
+  .cpcard .cpc-chrome b:nth-child(1) { background: #ff5f57; }
+  .cpcard .cpc-chrome b:nth-child(2) { background: #febc2e; }
+  .cpcard .cpc-chrome b:nth-child(3) { background: #28c840; }
+  .cpcard .cpc-chrome em {
+    margin-left: 12px; font-style: normal; font-size: 19px;
+    letter-spacing: 0.02em; color: rgba(246, 242, 233, 0.45);
+  }
+  .cpcard .cpc-frame img { display: block; width: 100%; height: auto; }
+
+  /* A tall capture is anchored to its top — the interesting rows are always first. The fade
+     makes the cut read as "there is more" rather than as a broken edge. Bee's captures all
+     need it: the catalog, log and diagnostics screens are long tables, and at the 950px the
+     panel gives them they come out well past the 620px cap. */
+  .cpcard .cpc-frame.cpc-clip { max-height: 620px; position: relative; }
+  .cpcard .cpc-frame.cpc-clip img { object-fit: cover; object-position: top center; max-height: 580px; }
+  .cpcard .cpc-frame.cpc-clip::after {
+    content: '';
+    position: absolute; inset: auto 0 0 0; height: 130px;
+    background: linear-gradient(180deg, rgba(228,237,246,0) 0%, rgba(228,237,246,0.92) 78%, #e4edf6 100%);
+  }
+
+  .cpcard .cpc-caption {
+    display: block; margin-top: 20px; font-size: 22px; line-height: 1.45;
+    color: rgba(246, 242, 233, 0.52);
+  }
+  .cpcard .cpc-caption b { color: rgba(246, 242, 233, 0.80); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Cover ============================================================ -->
+<section class="slide cover" data-n="1">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> Craft CMS 5 &nbsp;·&nbsp; Craft Commerce</div>
+      <h1 class="gradient-text">Bee</h1>
+      <p class="tagline">Recombee, wired&nbsp;in.</p>
+      <p class="lede">Catalog sync, interaction tracking, personalised recommendations and search —
+        without writing a line of API code.</p>
+      <div class="badges">
+        <span class="badge price"><span class="dot"></span> Lite free &nbsp;·&nbsp; Pro $149</span>
+        <span class="badge">Craft 5.3+ · PHP 8.2+ · no dependencies</span>
+      </div>
+    </div>
+    <div class="mark"><img src="assets/icon.svg" alt=""></div>
+  </div>
+</section>
+
+<!-- 2 · The whole pitch in one swap ====================================== -->
+<section class="slide statement" data-n="2">
+  <div class="inner">
+    <div class="eyebrow"><span class="rule"></span> The whole idea</div>
+    <div class="swap">
+      <span class="caption">What integrating a recommender usually costs</span>
+      <span class="before mono">sign · model · sync · track · resolve · attribute</span>
+      <span class="arrow"></span>
+      <span class="caption">What it costs with Bee</span>
+      <span class="after mono gradient-text">{{ craft.bee.recommend() }}</span>
+    </div>
+    <p class="lede">Configure a source in the control panel and write one Twig tag. Bee signs every
+      request, keeps the catalog current, records the funnel, and resolves the IDs that come back
+      into real Craft elements.</p>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 3 · What a catalog source is ========================================= -->
+<section class="slide feature" data-n="3">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> The catalog</div>
+      <h2>A source is<br>three answers</h2>
+      <p class="lede">Which elements, which of them count, and what Recombee is told about each.</p>
+      <ul class="points">
+        <li><span class="tick"></span><span class="t">Entries, products, categories, assets, users</span></li>
+        <li><span class="tick"></span><span class="t">Twenty built-in mappers, Twig for anything else</span></li>
+        <li><span class="tick"></span><span class="t">A content fingerprint, so an unchanged re-sync is free</span></li>
+        <li><span class="tick"></span><span class="t">Saves are batched into one queue job per request</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="parts">
+        <div class="part">
+          <div class="label">Which elements</div>
+          <div class="said">Product &nbsp;<b>·</b>&nbsp; TP Products</div>
+          <div class="also">Element type plus the sections, product types or groups inside it.</div>
+        </div>
+        <div class="part">
+          <div class="label">Which of them count</div>
+          <div class="said">Live elements only</div>
+          <div class="also">Disabled, expired and pending elements are removed from Recombee rather
+            than quietly left behind to be recommended.</div>
+        </div>
+        <div class="part">
+          <div class="label">What Recombee is told</div>
+          <div class="said">price &nbsp;<b>·</b>&nbsp; onSale &nbsp;<b>·</b>&nbsp; inStock &nbsp;<b>·</b>&nbsp; categories</div>
+          <div class="also">On top of the title, URL, image, dates and status Bee always sends.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 4 · The funnel ======================================================= -->
+<section class="slide feature" data-n="4">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> Interactions</div>
+      <h2>The funnel,<br>recorded</h2>
+      <p class="lede">A recommender is only as good as what it has watched people do.</p>
+      <ul class="points">
+        <li><span class="tick"></span><span class="t">Identity is resolved server-side, never off the request</span></li>
+        <li><span class="tick"></span><span class="t">Commerce carts and completed orders are wired up for you</span></li>
+        <li><span class="tick"></span><span class="t">Consent is read from a cookie before anything is sent</span></li>
+        <li><span class="tick"></span><span class="t">Guests are merged into the account they sign into</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="steps">
+        <div class="step"><span class="n mono">1</span><span class="t"><b>Detail view</b> — fired by the runtime after a dwell, not on load</span></div>
+        <div class="step"><span class="n mono">2</span><span class="t"><b>Search</b> — the query, and what the visitor did with the results</span></div>
+        <div class="step"><span class="n mono">3</span><span class="t"><b>Cart addition</b> — straight off Commerce's own line-item event</span></div>
+        <div class="step"><span class="n mono">4</span><span class="t"><b>Purchase</b> — on order completion, per variant or per product</span></div>
+        <div class="step"><span class="n mono">5</span><span class="t"><b>Backfill</b> — years of existing orders, replayed at their own dates</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 5 · The four calls =================================================== -->
+<section class="slide feature" data-n="5">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> In your templates</div>
+      <h2>Four calls,<br>real elements</h2>
+      <p class="lede">Every one hands back Craft elements, not IDs you have to go and look up.</p>
+      <ul class="points">
+        <li><span class="tick"></span><span class="t">Short timeout, no retries — a page render never waits</span></li>
+        <li><span class="tick"></span><span class="t">Fails open — an empty set, a logged reason, no 500</span></li>
+        <li><span class="tick"></span><span class="t">Filters to live elements on the Recombee side, not after</span></li>
+        <li><span class="tick"></span><span class="t">Scenarios let one database serve every slot on the site</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="places">
+        <div class="place">
+          <span class="chip mono">craft.bee.recommend()</span>
+          <div class="where">For this visitor</div>
+          <div class="what">The home page rail, personalised from everything they have done.</div>
+        </div>
+        <div class="place">
+          <span class="chip mono">craft.bee.related(product)</span>
+          <div class="where">Related to this</div>
+          <div class="what">“More like this”, and “customers also bought”, targeted at the visitor.</div>
+        </div>
+        <div class="place">
+          <span class="chip mono">craft.bee.segment(id)</span>
+          <div class="where">Related to a segment</div>
+          <div class="what">A whole category or brand as the starting point instead of one item.</div>
+        </div>
+        <div class="place">
+          <span class="chip mono">craft.bee.search(q)</span>
+          <div class="where">Personalised search</div>
+          <div class="what">Recombee's search is per-user, so two people get different orders.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 6 · Attribution ====================================================== -->
+<section class="slide feature" data-n="6">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> Attribution</div>
+      <h2>Which rail<br>earned it</h2>
+      <p class="lede">Recombee can only report revenue per scenario if the interactions carry the
+        recommendation that caused them.</p>
+      <ul class="points">
+        <li><span class="tick"></span><span class="t">Every set Bee hands out is written to a ledger</span></li>
+        <li><span class="tick"></span><span class="t">Interactions that follow are stamped with its recommId</span></li>
+        <li><span class="tick"></span><span class="t">Nothing to pass through your templates by hand</span></li>
+        <li><span class="tick"></span><span class="t">The ledger prunes itself on a retention window</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="finds">
+        <div class="find"><span class="vol mono">homepage</span><span class="what">137 sets · 40 people</span><span class="sev">user</span></div>
+        <div class="find bad"><span class="vol mono">cart-upsell</span><span class="what">127 sets · 40 people</span><span class="sev">item</span></div>
+        <div class="find"><span class="vol mono">category-rail</span><span class="what">114 sets · 39 people</span><span class="sev">user</span></div>
+        <div class="find"><span class="vol mono">product-detail</span><span class="what">110 sets · 37 people</span><span class="sev">item</span></div>
+        <div class="find warn"><span class="vol mono">search-results</span><span class="what">101 sets · 40 people</span><span class="sev">search</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 7 · Provable in a deploy ============================================= -->
+<section class="slide feature" data-n="7">
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow"><span class="rule"></span> Operations</div>
+      <h2>Provable<br>in a deploy</h2>
+      <p class="lede">Eleven checks, the same ones the control panel runs, exiting non-zero so a
+        pipeline can stop on them.</p>
+      <ul class="points">
+        <li><span class="tick"></span><span class="t">Credentials, region, connection and round-trip time</span></li>
+        <li><span class="tick"></span><span class="t">Every declared property, checked for type drift</span></li>
+        <li><span class="tick"></span><span class="t">A connection log with payloads and never a credential</span></li>
+        <li><span class="tick"></span><span class="t">A dry-run switch that logs requests without sending</span></li>
+      </ul>
+    </div>
+    <div class="term">
+      <div class="chrome"></div>
+      <div class="body mono">
+        <div><span class="prompt">$</span> <span class="cmd">php craft bee/diagnostics/check</span></div>
+        <div><span class="ok">✓</span> <span class="out">Credentials&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set from the environment.</span></div>
+        <div><span class="ok">✓</span> <span class="out">Connection&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reached rapi-us-west in 64ms.</span></div>
+        <div><span class="ok">✓</span> <span class="out">Catalog&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;169 item(s) synced.</span></div>
+        <div><span class="ok">✓</span> <span class="out">Properties&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;All 24 defined and matching.</span></div>
+        <div><span class="ok">✓</span> <span class="out">Commerce&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Order funnel wired up.</span></div>
+        <span class="blank"></span>
+        <div><span class="ok">Everything checks out.</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">echo $?</span></div>
+        <div><span class="out">0</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 8 · control-panel screenshot — the catalog =========================== -->
+<section class="slide cpcard" data-n="8">
+  <div class="cpc-inner">
+    <div class="cpc-copy">
+      <div class="cpc-eyebrow"><i></i> In the control panel</div>
+      <h2 class="cpc-h2">What is in<br>the catalog</h2>
+      <p class="cpc-lede">Every source, every property it declares, and the sync state of each item.</p>
+    </div>
+    <div class="cpc-panel">
+      <figure class="cpc-frame cpc-clip">
+        <div class="cpc-chrome"><b></b><b></b><b></b><em>Bee catalog</em></div>
+        <img src="shots/bee-catalog.png" alt="">
+      </figure>
+      <span class="cpc-caption">The Bee catalog screen with its sync counters, the two sources feeding
+        the recommender, and the payload preview that shows exactly what one element would send</span>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<!-- 9 · control-panel screenshot — diagnostics =========================== -->
+<section class="slide cpcard" data-n="9">
+  <div class="cpc-inner">
+    <div class="cpc-copy">
+      <div class="cpc-eyebrow"><i></i> In the control panel</div>
+      <h2 class="cpc-h2">And whether<br>it is working</h2>
+      <p class="cpc-lede">Eleven checks, each with the command that fixes it when it is not.</p>
+    </div>
+    <div class="cpc-panel">
+      <figure class="cpc-frame cpc-clip">
+        <div class="cpc-chrome"><b></b><b></b><b></b><em>Bee diagnostics</em></div>
+        <img src="shots/bee-diagnostics.png" alt="">
+      </figure>
+      <span class="cpc-caption">The Bee diagnostics screen reporting credentials, connection,
+        catalog, item properties, tracking, multi-site and Commerce, with the historic-order
+        backfill underneath</span>
+    </div>
+  </div>
+  <div class="footer"><img src="assets/icon.svg" alt=""> <b>Bee</b> &nbsp;·&nbsp; justinholt.com/plugins/craft-bee</div>
+</section>
+
+<script>
+  var n = new URLSearchParams(location.search).get('s');
+  if (n) {
+    document.body.classList.add('single');
+    var el = document.querySelector('.slide[data-n="' + n + '"]');
+    if (el) el.classList.add('active');
+  }
+</script>
+</body>
+</html>

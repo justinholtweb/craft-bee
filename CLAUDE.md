@@ -123,6 +123,14 @@ uncacheable.
 - Craft's editable table always posts a blank final row; the controller drops rows with no name.
 - Never nest a `<form>` in a CP template — post secondary actions with `Craft.sendActionRequest`.
 - Never mark plugin settings `required`: a fresh install then cannot save *any* setting.
+- **`Plugins::savePluginSettings()` replaces `plugins.bee.settings` in project config with exactly
+  the array it is handed** — it does not merge with what is stored. Passing two keys silently wipes
+  the credentials, the call still returns `true`, and the next console command fails with "Bee is
+  not connected to a Recombee database" pointing at nothing. Always send the whole model;
+  `tests/shots/_settings.php` wraps it.
+- **A console script never reaches `EVENT_AFTER_REQUEST`, so project config writes are never
+  flushed.** The save reports success and the in-memory model is correct, but nothing is written and
+  the next process sees the old values. End with `saveModifiedConfigData()`.
 
 See also `[[craft-plugin-gotchas]]` in the shared memory for family-wide traps.
 
@@ -144,9 +152,32 @@ captured and asserted on, including the ones a real server would have quietly ac
 thing a mock cannot verify is the signature, so that is checked against an independently computed
 HMAC rather than against Bee's own code.
 
+Run `tests/shots/teardown.php` before either suite if the screenshot harness has been used. The
+sources it creates declare properties, and the property check counts the requests a sync makes
+across every declared property — leaving them in place fails two checks that have nothing wrong
+with them.
+
 `commerce-checks.php` is separate because Commerce is optional: it is the only test file allowed to
 name a Commerce class, and `checks.php` asserts that `services\Commerce.php` is the only source file
 that imports one. Both suites are idempotent and restore sources, rows, edition and settings.
+
+## Marketing assets
+
+- `promos/` — the Plugin Store deck. `./build.sh` renders nine 1920×1080 slides from `slides.html`
+  in headless Chrome. `assets/icon.svg` is a straight copy of `src/icon.svg` and
+  `assets/watermark.svg` is `src/icon-mask.svg` with the fill switched to white: **three files, one
+  geometry.** See `promos/README.md`.
+- `tests/shots/` — drives `~/Sites/plugin-testing` into a state worth photographing, against a
+  stand-in Recombee API running in the container. Bee's own client does the talking, so the sync
+  table, the connection log and the ledger are filled by Bee rather than by fixtures. See
+  `tests/shots/README.md`.
+- `~/Sites/craft-bee-website` — the marketing site. The palette is measured off the icon; the Pro
+  price lives in four places and `promos/README.md` lists them.
+
+The icon is hand-authored, not traced: `src/icon.svg` is a rounded `<rect>` plus a group of closed
+paths with real gaps between them, which is what lets the same path data drop into
+`src/icon-mask.svg` where there is no tile colour to paint a separator with. `src/icon.jpg` is the
+reference artwork it was vectorised from.
 
 ## Coding conventions
 
