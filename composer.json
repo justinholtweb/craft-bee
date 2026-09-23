@@ -21,7 +21,8 @@
         }
     ],
     "support": {
-        "email": "justin@justinholt.com"
+        "email": "justin@justinholt.com",
+        "docs": "https://justinholt.com/plugins/craft-bee/docs"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -49,7 +50,7 @@
         "handle": "bee",
         "developer": "Justin Holt",
         "developerUrl": "https://justinholt.com",
-        "documentationUrl": "https://github.com/justinholtweb/craft-bee/blob/main/README.md",
+        "documentationUrl": "https://justinholt.com/plugins/craft-bee/docs",
         "changelogUrl": "https://raw.githubusercontent.com/justinholtweb/craft-bee/main/CHANGELOG.md",
         "class": "justinholtweb\\bee\\Plugin",
         "editions": ["lite", "pro"]
