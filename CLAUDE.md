@@ -163,20 +163,22 @@ that imports one. Both suites are idempotent and restore sources, rows, edition 
 
 ## Marketing assets
 
-- `~/Sites/craft-bee-website/promos/` — the Plugin Store deck. It lives in the *website* repo, not
-  here: a plugin with its own domain keeps its deck beside its site, and only the plugins that live
-  as a page on justinholt.com keep theirs in the plugin repo. `./build.sh` renders nine 1920×1080
-  slides in headless Chrome. Its `assets/icon.svg` is a straight copy of `src/icon.svg` and its
-  `assets/watermark.svg` is `src/icon-mask.svg` with the fill switched to white: **three files, one
-  geometry** — change the icon and change all three.
+- `promos/` — the Plugin Store deck. It lives here, in the plugin repo, because Bee is a page on
+  justinholt.com rather than an own-domain plugin (those keep their deck in a `craft-*-website`
+  repo). `./build.sh` renders nine 1920×1080 slides in headless Chrome. Its `assets/icon.svg` is a
+  straight copy of `src/icon.svg` and its `assets/watermark.svg` is `src/icon-mask.svg` with the
+  fill switched to white: **three files, one geometry** — change the icon and change all three.
 - `tests/shots/` — drives `~/Sites/plugin-testing` into a state worth photographing, against a
   stand-in Recombee API running in the container. Bee's own client does the talking, so the sync
   table, the connection log and the ledger are filled by Bee rather than by fixtures. See
   `tests/shots/README.md`.
-- `~/Sites/craft-bee-website` — the marketing site, at **craft-bee.com**. Bee is an own-domain
-  plugin, so it is listed in `craft-plugin-registry/plugins.json` and does **not** get a page in the
-  justinholt.com repo — that repo's `scripts/seed/plugin-pages/` is the other tier. The palette is
-  measured off the icon; the Pro price lives in four places and `promos/README.md` lists them.
+- The marketing page and docs live on **justinholt.com** at `/plugins/craft-bee` and
+  `/plugins/craft-bee/docs`, seeded from `scripts/seed/plugin-pages/craft-bee.json` in
+  `~/Sites/justinholt`. There is **no own domain**: craft-bee.com will not be used, and Bee does not
+  go in `craft-plugin-registry/plugins.json`. `composer.json`'s `extra.documentationUrl` and
+  `support.docs` must match the docs URL entered in the Plugin Store listing, or submission fails
+  the check. The palette is measured off the icon; the Pro price lives in four places and
+  `promos/README.md` lists them.
 
 The icon is hand-authored, not traced: `src/icon.svg` is a rounded `<rect>` plus a group of closed
 paths with real gaps between them, which is what lets the same path data drop into

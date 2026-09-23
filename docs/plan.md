@@ -69,6 +69,6 @@ run: 26 items synced, 26 unchanged on the rerun.
 ## Still to do
 
 - GitHub repo, tag, Packagist, Plugin Store submission
-- Marketing site (`craft-bee-website`), and a registry entry
+- Marketing page and docs on justinholt.com (`scripts/seed/plugin-pages/craft-bee.json`)
 - A run against a real Recombee free-tier database, to confirm the signature and the catalog land
   the way the mock says they do
