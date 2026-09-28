@@ -1,7 +1,7 @@
 {
     "name": "justinholtweb/craft-bee",
     "description": "Recombee recommendations for Craft CMS and Craft Commerce — catalog sync, interaction tracking, personalised recommendations and search, without writing a line of API code.",
-    "version": "5.0.0",
+    "version": "5.0.1",
     "type": "craft-plugin",
     "keywords": [
         "craftcms",

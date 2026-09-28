@@ -147,7 +147,16 @@ try {
      */
     $usableOrders = [];
 
-    foreach (Order::find()->isCompleted(true)->orderBy(['commerce_orders.dateOrdered' => SORT_DESC])->limit(40)->all() as $candidate) {
+    // Filtered on a customer in SQL, not just in the loop: other suites in the harness leave guest
+    // orders behind, and once the newest forty were all guests this found none and gave up.
+    $candidates = Order::find()
+        ->isCompleted(true)
+        ->andWhere(['not', ['commerce_orders.customerId' => null]])
+        ->orderBy(['commerce_orders.dateOrdered' => SORT_DESC])
+        ->limit(40)
+        ->all();
+
+    foreach ($candidates as $candidate) {
         if (count($candidate->getLineItems()) > 0 && $candidate->getCustomer() !== null) {
             $usableOrders[] = $candidate;
         }
@@ -478,6 +487,11 @@ try {
 
         return true;
     });
+} catch (Throwable $e) {
+    // Without this, anything thrown above is swallowed by the `exit` in `finally`, and a suite
+    // that never ran a single check reports "All 0 Commerce checks passed" with exit code 0.
+    $failed++;
+    echo "\n  ✗ the suite stopped: " . get_class($e) . ': ' . $e->getMessage() . "\n    " . $e->getFile() . ':' . $e->getLine() . "\n";
 } finally {
     section('Cleanup');
 

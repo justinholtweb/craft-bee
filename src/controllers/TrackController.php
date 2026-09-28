@@ -43,6 +43,15 @@ class TrackController extends Controller
 
     private const RATE_LIMIT = 120;
 
+    /** What the runtime (`Bee.view()`, `cartAdd()`, `bookmark()`, `rate()`, `portion()`) sends. */
+    private const BROWSER_KINDS = [
+        Interaction::DETAIL_VIEW,
+        Interaction::CART_ADDITION,
+        Interaction::BOOKMARK,
+        Interaction::RATING,
+        Interaction::VIEW_PORTION,
+    ];
+
     public function actionRecord(): Response
     {
         $this->requirePostRequest();
@@ -65,6 +74,13 @@ class TrackController extends Controller
 
         if (!in_array($kind, Interaction::KINDS, true)) {
             return $this->asJson(['ok' => false, 'reason' => 'unknown-kind']);
+        }
+
+        // A purchase is recorded on the server — by the Commerce integration, or by
+        // `craft.bee.trackPurchase()` — never from the browser. Accepting it here would let anyone
+        // script purchases of any item and push it up every visitor's recommendations.
+        if (!in_array($kind, self::BROWSER_KINDS, true)) {
+            return $this->asJson(['ok' => false, 'reason' => 'server-only']);
         }
 
         if (!$this->itemExists($itemId)) {
@@ -201,19 +217,40 @@ class TrackController extends Controller
             ->exists();
     }
 
+    /**
+     * At most {@see RATE_LIMIT} requests a minute from one address.
+     *
+     * Keyed on the IP alone. It used to include the User-Agent, which the client chooses, so a
+     * script rotating it had no limit at all. The minute is part of the key, so each window starts
+     * from zero rather than depending on when the cache entry happens to expire.
+     */
     private function rateLimit(): bool
     {
-        $request = Craft::$app->getRequest();
-        $key = 'bee:rate:' . sha1((string)$request->getUserIP() . '|' . (string)$request->getUserAgent());
+        $window = intdiv(time(), 60);
+        $key = 'bee:rate:' . sha1((string)Craft::$app->getRequest()->getUserIP()) . ':' . $window;
         $cache = Craft::$app->getCache();
-        $count = (int)$cache->get($key);
+        $mutex = Craft::$app->getMutex();
 
-        if ($count >= self::RATE_LIMIT) {
+        // The read and the write have to be one step. Without the lock, twenty requests in flight
+        // all read the same count and all write it back plus one, so a client that simply sends in
+        // parallel is never limited. If the lock can't be had quickly, refuse rather than wait:
+        // this is a beacon, and a dropped view is cheaper than a stalled worker.
+        if (!$mutex->acquire($key, 2)) {
             return false;
         }
 
-        $cache->set($key, $count + 1, 60);
+        try {
+            $count = (int)$cache->get($key);
 
-        return true;
+            if ($count >= self::RATE_LIMIT) {
+                return false;
+            }
+
+            $cache->set($key, $count + 1, 120);
+
+            return true;
+        } finally {
+            $mutex->release($key);
+        }
     }
 }

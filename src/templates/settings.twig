@@ -1,4 +1,5 @@
 {% import "_includes/forms.twig" as forms %}
+{% include 'bee/_styles' %}
 
 {% set settings = settings ?? plugin.settings %}
 {% set isPro = plugin.isPro() %}
@@ -61,7 +62,7 @@
     <div class="heading"><label>{{ "Test the connection"|t('bee') }}</label></div>
     <div class="input">
       <button type="button" class="btn" id="bee-test">{{ "Test connection"|t('bee') }}</button>
-      <span id="bee-test-result" class="light" style="margin-left: 8px;"></span>
+      <span id="bee-test-result" class="light bee-inline-note"></span>
     </div>
     <div class="instructions"><p>{{ "Saves nothing — it just asks Recombee for the item-property list with the credentials above."|t('bee') }}</p></div>
   </div>
@@ -370,15 +371,17 @@ document.getElementById('bee-test').addEventListener('click', function() {
   var result = document.getElementById('bee-test-result');
   button.classList.add('loading');
   result.textContent = '';
+  result.classList.remove('error');
 
   Craft.sendActionRequest('POST', 'bee/diagnostics/test', {})
     .then(function(response) {
       result.textContent = response.data.message;
-      result.style.color = response.data.success ? '' : '#CF1124';
+      // Craft's `.error` colour, so the message follows the CP theme.
+      result.classList.toggle('error', !response.data.success);
     })
     .catch(function(error) {
       result.textContent = (error.response && error.response.data && error.response.data.message) || 'Request failed.';
-      result.style.color = '#CF1124';
+      result.classList.add('error');
     })
     .finally(function() {
       button.classList.remove('loading');

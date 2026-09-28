@@ -1,0 +1,24 @@
+{#
+  Shared CP styles for Bee's screens.
+
+  Built on Craft's own custom properties rather than literal colours and sizes, so the screens
+  follow the CP's theme (and dark mode) instead of fighting it. Included once per screen.
+#}
+{% css %}
+  .bee-stats { display: flex; flex-wrap: wrap; gap: var(--xl); }
+  .bee-stat-value { font-size: 28px; line-height: 1.1; }
+  .bee-code {
+    padding: var(--m);
+    background: var(--gray-050);
+    border-radius: var(--radius-lg);
+    overflow: auto;
+    max-height: 420px;
+  }
+  .bee-inline-note { margin-inline-start: var(--s); }
+  .bee-nowrap { white-space: nowrap; }
+  .bee-label-col { width: 180px; }
+  .bee-key-col { width: 30%; }
+  .bee-check-icon { vertical-align: top; padding-top: var(--m); }
+  .bee-check-label { width: 200px; vertical-align: top; }
+  .bee-check-fix { margin-top: var(--xs); }
+{% endcss %}

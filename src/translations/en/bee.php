@@ -244,4 +244,5 @@ return [
     '{n, plural, =0{Nothing to sync} =1{Queued a sync for 1 source} other{Queued syncs for # sources}}' => '{n, plural, =0{Nothing to sync} =1{Queued a sync for 1 source} other{Queued syncs for # sources}}',
     '{n, plural, =1{1 entry cleared} other{# entries cleared}}' => '{n, plural, =1{1 entry cleared} other{# entries cleared}}',
     '“{name}” is one of the properties Bee maintains itself.' => '“{name}” is one of the properties Bee maintains itself.',
+    'Only admins can add or change sources, because they live in project config and can run Twig.' => 'Only admins can add or change sources, because they live in project config and can run Twig.',
 ];

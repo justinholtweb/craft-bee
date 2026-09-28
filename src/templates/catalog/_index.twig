@@ -5,7 +5,7 @@
 {% set selectedSubnavItem = 'catalog' %}
 
 {% block actionButton %}
-  {% if canManage and not readOnly %}
+  {% if canManage %}
     <div class="btngroup">
       <button type="button" class="btn submit" data-bee-sync>{{ "Sync everything"|t('bee') }}</button>
       <div class="btn submit menubtn"></div>
@@ -21,6 +21,8 @@
 {% endblock %}
 
 {% block content %}
+  {% include 'bee/_styles' %}
+
 
   {% if not plugin.settings.isConfigured() %}
     <div class="pane">
@@ -29,7 +31,7 @@
     </div>
   {% endif %}
 
-  <div class="pane" style="display:flex; gap:24px; flex-wrap:wrap;">
+  <div class="pane bee-stats">
     {% set tiles = [
       { label: 'Synced'|t('bee'), value: counts.synced ?? 0 },
       { label: 'Pending'|t('bee'), value: counts.pending ?? 0 },
@@ -39,13 +41,13 @@
     {% for tile in tiles %}
       <div>
         <div class="light smalltext">{{ tile.label }}</div>
-        <div style="font-size:28px; line-height:1.1;">{{ tile.value }}</div>
+        <div class="bee-stat-value">{{ tile.value }}</div>
       </div>
     {% endfor %}
-    <div style="flex:1"></div>
+    <div class="flex-grow"></div>
     <div>
       <div class="light smalltext">{{ "Declared properties"|t('bee') }}</div>
-      <div style="font-size:28px; line-height:1.1;">{{ declared.properties|length }}</div>
+      <div class="bee-stat-value">{{ declared.properties|length }}</div>
     </div>
   </div>
 
@@ -85,12 +87,12 @@
             </td>
             <td class="light">{{ source.declaredProperties()|length }}</td>
             <td class="thin">
-              {% if canManage and not readOnly %}
+              {% if canManage %}
                 <button type="button" class="btn small" data-bee-sync data-uid="{{ source.uid }}">{{ "Sync"|t('bee') }}</button>
               {% endif %}
             </td>
             <td class="thin">
-              {% if canManage and not readOnly %}
+              {% if canEditSources %}
                 <a class="delete icon" title="{{ 'Delete'|t('bee') }}" data-bee-delete data-uid="{{ source.uid }}"></a>
               {% endif %}
             </td>
@@ -104,10 +106,12 @@
     </div>
   {% endif %}
 
-  {% if canManage and not readOnly %}
+  {% if canEditSources %}
     <p><a class="btn add icon" href="{{ url('bee/catalog/new') }}">{{ "New source"|t('bee') }}</a></p>
   {% elseif readOnly %}
     <p class="light">{{ "Sources live in project config, which is read-only because allowAdminChanges is off."|t('bee') }}</p>
+  {% else %}
+    <p class="light">{{ "Only admins can add or change sources, because they live in project config and can run Twig."|t('bee') }}</p>
   {% endif %}
 
   <hr>
@@ -126,9 +130,9 @@
 
   <p>
     <button type="button" class="btn" id="bee-preview-go">{{ "Preview"|t('bee') }}</button>
-    <span id="bee-preview-note" class="light" style="margin-left:8px;"></span>
+    <span id="bee-preview-note" class="light bee-inline-note"></span>
   </p>
-  <pre id="bee-preview-out" class="code" style="display:none; padding:12px; background:#f3f7fc; border-radius:5px; overflow:auto; max-height:420px;"></pre>
+  <pre id="bee-preview-out" class="code bee-code hidden"></pre>
 
   {% if recent|length %}
     <hr>
@@ -217,13 +221,13 @@
     Craft.sendActionRequest('POST', 'bee/catalog/preview', { data: { elementId: input.value } })
       .then(function(r) {
         if (!r.data.success) {
-          out.style.display = 'none';
+          out.classList.add('hidden');
           note.textContent = r.data.error;
           return;
         }
         note.textContent = r.data.itemId + '  ·  ' + r.data.source + (r.data.included ? '' : '  ·  ' + Craft.t('bee', 'excluded right now'));
         out.textContent = r.data.json;
-        out.style.display = 'block';
+        out.classList.remove('hidden');
       });
   });
 })();

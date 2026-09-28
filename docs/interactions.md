@@ -122,7 +122,9 @@ It is the only part of Bee a stranger can reach, and it is built on that basis:
 - the user is resolved server-side, never from the request;
 - items that are not in the sync table are refused — otherwise Recombee's `cascadeCreate` would let
   anyone mint ghost items in your database;
-- requests are rate limited per client;
+- **purchases are refused** — they are recorded on the server, by the Commerce integration or
+  `craft.bee.trackPurchase()`, so a script cannot inflate an item's popularity with fake ones;
+- requests are rate limited per IP address (120 a minute), whatever User-Agent they send;
 - CSRF is **deliberately off**: a beacon cannot carry a token, and a token in the page would make
   every page uncacheable.
 

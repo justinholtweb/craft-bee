@@ -103,9 +103,12 @@ class PropertyMap extends Model
 
     private function renderTwig(ElementInterface $element): mixed
     {
-        $rendered = Craft::$app->getView()->renderObjectTemplate($this->value, $element, [
-            'element' => $element,
-        ]);
+        // Only admins can save a Twig property (sources are admin-only), which is what makes this
+        // safe. Where the site has turned on Craft's Twig sandbox (5.9+), honour it as well.
+        $view = Craft::$app->getView();
+        $rendered = method_exists($view, 'renderSandboxedObjectTemplate')
+            ? $view->renderSandboxedObjectTemplate($this->value, $element, ['element' => $element])
+            : $view->renderObjectTemplate($this->value, $element, ['element' => $element]);
 
         // A set built in Twig comes back as a string; splitting on newlines is the least surprising
         // way to let a template produce several values.

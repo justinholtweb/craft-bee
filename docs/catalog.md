@@ -38,6 +38,12 @@ re-clicked in every environment.
 The consequence is correct but surprising the first time: sources are **read-only when
 `allowAdminChanges` is off**. On production you change them by deploying a changed project config.
 
+Only **admins** can add, change, reorder or delete a source. A source is project config, and a Twig
+property is code that runs against every element it syncs, so it gets the same rule as Craft's own
+Twig-bearing settings. The *Manage the catalog* permission still runs syncs, re-sends and purges —
+including on production, where `allowAdminChanges` is off. If you turn on Craft's
+`enableTwigSandbox` (Craft 5.9+), Twig properties are rendered in the sandbox as well.
+
 ## Item IDs
 
 | Element | ID |

@@ -916,6 +916,25 @@ try {
         return count($set->elements()) === 1 ?: 'got ' . count($set->elements());
     });
 
+    check('a disabled element Recombee still recommends is not resolved', function() use ($plugin, $entry) {
+        // Recombee's catalog lags Craft, and a caller can turn the live filter off, so the
+        // resolver has to hold the line itself: the anonymous recommend endpoint returns titles
+        // and URLs of whatever comes back from here.
+        $hidden = Entry::find()->status('disabled')->one() ?? Entry::find()->status('pending')->one();
+
+        if ($hidden === null) {
+            return 'no disabled or pending entry in the harness to check against';
+        }
+
+        $resolved = $plugin->getRecommendations()->resolveElements(
+            [Ids::forElement($hidden), Ids::forElement($entry)],
+            $hidden->siteId,
+        );
+        $ids = array_map(static fn($e) => (int)$e->id, $resolved);
+
+        return !in_array((int)$hidden->id, $ids, true) ?: 'resolved a ' . $hidden->getStatus() . ' entry: ' . Json::encode([$hidden->id, $hidden->siteId, Ids::forElement($hidden), $ids]);
+    });
+
     check('the live filter is added to every request unless the caller opts out', function() use ($plugin) {
         [, $history] = withMock([jsonResponse(['recommId' => 'r', 'recomms' => []])],
             fn() => $plugin->getRecommendations()->toUser(['userId' => 'ufilter']));

@@ -46,7 +46,8 @@ Recombee so the history they built before signing up is not thrown away.
 
 It is the only thing a stranger can reach, and it is built on that basis. The user is resolved
 server-side, items not in the sync table are refused — otherwise Recombee's `cascadeCreate` would let
-anyone mint ghost items in your database — and requests are rate limited per client. CSRF is
+anyone mint ghost items in your database — purchases are only accepted from the server, and
+requests are rate limited per IP address. CSRF is
 deliberately off: a beacon cannot carry a token, and a token in the page would make every page
 uncacheable.
 

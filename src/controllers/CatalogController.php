@@ -44,7 +44,10 @@ class CatalogController extends Controller
             'counts' => $counts,
             'total' => array_sum($counts),
             'declared' => $plugin->getSources()->declaredProperties(),
+            // Syncing writes to the database and Recombee, so it works in production. Editing a
+            // source writes project config, so it needs an admin and `allowAdminChanges`.
             'canManage' => Craft::$app->getUser()->checkPermission('bee-manageCatalog'),
+            'canEditSources' => $this->canEditSources(),
             'readOnly' => !Craft::$app->getConfig()->getGeneral()->allowAdminChanges,
             'recent' => $this->recentRows(),
         ]);
@@ -77,14 +80,24 @@ class CatalogController extends Controller
                 ['label' => Craft::t('bee', 'Twig'), 'value' => PropertyMap::KIND_TWIG],
             ],
             'specialOptions' => $plugin->getCatalog()->specialOptions(),
-            'readOnly' => !Craft::$app->getConfig()->getGeneral()->allowAdminChanges,
+            'readOnly' => !$this->canEditSources(),
+            'adminChangesOff' => !Craft::$app->getConfig()->getGeneral()->allowAdminChanges,
         ]);
+    }
+
+    private function canEditSources(): bool
+    {
+        return (bool)Craft::$app->getUser()->getIdentity()?->admin
+            && Craft::$app->getConfig()->getGeneral()->allowAdminChanges;
     }
 
     public function actionSaveSource(): ?Response
     {
         $this->requirePostRequest();
-        $this->requirePermission('bee-manageCatalog');
+        // Sources live in project config, and a Twig property is code: both are admin work. The
+        // default argument also refuses the save where `allowAdminChanges` is off, so production
+        // cannot drift from project.yaml. `bee-manageCatalog` still runs syncs and purges.
+        $this->requireAdmin();
 
         $request = Craft::$app->getRequest();
         $uid = $request->getBodyParam('uid');
@@ -119,7 +132,7 @@ class CatalogController extends Controller
     {
         $this->requirePostRequest();
         $this->requireAcceptsJson();
-        $this->requirePermission('bee-manageCatalog');
+        $this->requireAdmin();
 
         $uid = (string)Craft::$app->getRequest()->getRequiredBodyParam('uid');
 
@@ -130,7 +143,7 @@ class CatalogController extends Controller
     {
         $this->requirePostRequest();
         $this->requireAcceptsJson();
-        $this->requirePermission('bee-manageCatalog');
+        $this->requireAdmin();
 
         $uids = \craft\helpers\Json::decodeIfJson(Craft::$app->getRequest()->getRequiredBodyParam('ids'));
 
@@ -213,7 +226,9 @@ class CatalogController extends Controller
 
         $element = Craft::$app->getElements()->getElementById($elementId, null, $siteId);
 
-        if ($element === null) {
+        // Same answer for "missing" and "not yours": the preview shows every mapped value, so it
+        // must not become a way to read entries in sections this user has no access to.
+        if ($element === null || !Craft::$app->getElements()->canView($element)) {
             return $this->asJson(['success' => false, 'error' => Craft::t('bee', 'That element no longer exists.')]);
         }
 

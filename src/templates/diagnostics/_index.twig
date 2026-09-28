@@ -5,6 +5,8 @@
 {% set selectedSubnavItem = 'diagnostics' %}
 
 {% block content %}
+  {% include 'bee/_styles' %}
+
 
   <div class="pane">
     {% if worst == 'ok' %}
@@ -21,14 +23,14 @@
     <tbody>
       {% for check in checks %}
         <tr>
-          <td class="thin" style="vertical-align:top; padding-top:14px;">
+          <td class="thin bee-check-icon">
             <span class="status {{ check.status == 'ok' ? 'green' : (check.status == 'warning' ? 'orange' : (check.status == 'error' ? 'red' : '')) }}"></span>
           </td>
-          <td style="width:200px; vertical-align:top;"><strong>{{ check.label }}</strong></td>
+          <td class="bee-check-label"><strong>{{ check.label }}</strong></td>
           <td>
             {{ check.message }}
             {% if check.fix and check.status != 'ok' %}
-              <div class="light smalltext" style="margin-top:4px;">→ {{ check.fix }}</div>
+              <div class="light smalltext bee-check-fix">→ {{ check.fix }}</div>
             {% endif %}
           </td>
         </tr>
@@ -47,7 +49,7 @@
       <p>
         <input type="text" class="text" id="bee-backfill-since" placeholder="2024-01-01" size="12">
         <button type="button" class="btn submit" id="bee-backfill">{{ "Queue backfill"|t('bee') }}</button>
-        <span class="light" style="margin-left:8px;">{{ "Leave the date empty for everything."|t('bee') }}</span>
+        <span class="light bee-inline-note">{{ "Leave the date empty for everything."|t('bee') }}</span>
       </p>
     {% else %}
       <p class="light">{{ "Backfilling historic orders is a Pro feature."|t('bee') }}</p>

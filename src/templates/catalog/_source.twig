@@ -10,10 +10,16 @@
 {% set fullPageForm = not readOnly %}
 
 {% block content %}
+  {% include 'bee/_styles' %}
 
-  {% if readOnly %}
+
+  {% if adminChangesOff %}
     <div class="pane">
       <p class="light">{{ "Sources live in project config, which is read-only because allowAdminChanges is off. Change this in an environment where admin changes are allowed, and deploy it."|t('bee') }}</p>
+    </div>
+  {% elseif readOnly %}
+    <div class="pane">
+      <p class="light">{{ "Only admins can add or change sources, because they live in project config and can run Twig."|t('bee') }}</p>
     </div>
   {% endif %}
 
@@ -127,7 +133,7 @@
       <tbody>
         {% for key, label in specialOptions %}
           <tr>
-            <td class="code" style="width:30%">{{ key }}</td>
+            <td class="code bee-key-col">{{ key }}</td>
             <td class="light">{{ label }}</td>
           </tr>
         {% endfor %}

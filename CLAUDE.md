@@ -89,9 +89,10 @@ than the page render. `craft.bee.recommend()` is the deliberate exception.
 
 `controllers\TrackController` is the only thing a stranger can reach. It resolves the user
 server-side (never from the request), refuses items not in the sync table (otherwise `cascadeCreate`
-would let anyone mint ghost items in the merchant's database), rate limits per client, and has CSRF
-**deliberately off** — a beacon cannot carry a token, and a token in the page would make every page
-uncacheable.
+would let anyone mint ghost items in the merchant's database), refuses purchases (those are
+server-side only), rate limits per IP under a mutex so parallel requests can't slip past, and has
+CSRF **deliberately off** — a beacon cannot carry a token, and a token in the page would make every
+page uncacheable.
 
 ## Traps found while building this
 
@@ -131,6 +132,15 @@ uncacheable.
 - **A console script never reaches `EVENT_AFTER_REQUEST`, so project config writes are never
   flushed.** The save reports success and the in-memory model is correct, but nothing is written and
   the next process sees the old values. End with `saveModifiedConfigData()`.
+- **Sources are admin-only** (`requireAdmin()`, which also requires `allowAdminChanges`), because a
+  Twig property is code. `bee-manageCatalog` is for syncs. Don't reintroduce a permission check on
+  the source actions.
+- **The harness can test the published release instead of this repo.** If
+  `~/Sites/plugin-testing/vendor/justinholtweb/craft-bee` is a directory rather than a symlink,
+  Composer installed the GitHub zip and every suite is testing old code. Fixed 2026-09-28 by moving
+  `composer.craftcms.com` to the end of the harness's `repositories`.
+- **A cache counter read then written back is not a rate limit** under parallel requests — they all
+  read the same number. `TrackController::rateLimit()` holds Craft's mutex around it.
 
 See also `[[craft-plugin-gotchas]]` in the shared memory for family-wide traps.
 
@@ -140,8 +150,9 @@ No local PHP on this Mac. Everything runs inside the plugin-testing container:
 
 ```sh
 cd ~/Sites/plugin-testing
-ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 101 checks
+ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 102 checks
 ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 checks
+ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
 bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  10 checks
 ddev exec bash -c 'find /var/www/craft-bee/src -name "*.php" -print0 | xargs -0 -n1 php -l'
 ```

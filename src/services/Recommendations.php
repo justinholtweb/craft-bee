@@ -308,7 +308,9 @@ class Recommendations extends Component
                     $elements = $class::find()
                         ->id($ids)
                         ->siteId($querySiteId)
-                        ->status(null)
+                        // The element type's default status — live, for entries and products. The
+                        // anonymous endpoint returns these, and Recombee's catalog can be stale or
+                        // `filterLive` off, so a disabled or future entry must not come back here.
                         ->limit(null)
                         ->all();
                 } catch (\Throwable $e) {
