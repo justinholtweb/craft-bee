@@ -22,6 +22,25 @@ questions: which elements, which of them count, and what Recombee is told.
 Leave the scope boxes unchecked to include everything of that type. One database can carry several
 sources — the `itemType` property Bee always sends keeps them apart.
 
+### Users
+
+A Users source turns people into items — members to follow, authors, a speaker directory. A few
+things work differently from entries:
+
+- **Groups are any-of.** A user in *any* checked group is included, whatever other groups they are
+  also in.
+- **Only active users count as live.** Suspended, pending and inactive accounts are removed from
+  Recombee. A user who is merely locked out after failed logins stays.
+- **Status and group changes resync on their own.** Craft changes those without saving the user, so
+  Bee listens for activation, suspension, unlocking and group assignment itself.
+- **One item per user**, under the site their account belongs to (your primary site). Make sure
+  that site is one of the synced sites.
+- **What leaves your site:** the user's full name as `title`, their photo as `imageUrl`, and
+  whatever properties you map. Map nothing you would not be comfortable sharing with Recombee.
+- **Never through the public endpoint.** The anonymous JSON recommendation endpoint skips users, so
+  it cannot be used to list your members. Show recommended users with `craft.bee.recommend()` in
+  your own templates, where you decide what is printed.
+
 ## Which of them count
 
 **Live elements only** is on by default and should usually stay on. Disabled, expired and pending

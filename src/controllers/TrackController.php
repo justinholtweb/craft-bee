@@ -4,6 +4,7 @@ namespace justinholtweb\bee\controllers;
 
 use Craft;
 use craft\db\Query;
+use craft\elements\User;
 use craft\helpers\Json;
 use craft\web\Controller;
 use justinholtweb\bee\db\Table;
@@ -151,9 +152,32 @@ class TrackController extends Controller
             ? $recommendations->toItem($itemId, $options)
             : $recommendations->toUser($options);
 
+        return $this->asJson([
+            'ok' => !$set->failed,
+            'recommId' => $set->recommId,
+            'items' => self::publicItems($set->elements()),
+        ]);
+    }
+
+    /**
+     * The elements a stranger may see, as the JSON the runtime renders.
+     *
+     * Never users. A site can recommend members in its own templates, where it decides what to
+     * print; this endpoint answers anyone, and handing out names by the dozen would make it a
+     * member directory with no access control.
+     *
+     * @param \craft\base\ElementInterface[] $elements
+     * @return array<int, array{id: ?string, title: string, url: ?string}>
+     */
+    public static function publicItems(array $elements): array
+    {
         $items = [];
 
-        foreach ($set->elements() as $element) {
+        foreach ($elements as $element) {
+            if ($element instanceof User) {
+                continue;
+            }
+
             $items[] = [
                 'id' => \justinholtweb\bee\helpers\Ids::forElement($element),
                 'title' => (string)$element->title,
@@ -161,11 +185,7 @@ class TrackController extends Controller
             ];
         }
 
-        return $this->asJson([
-            'ok' => !$set->failed,
-            'recommId' => $set->recommId,
-            'items' => $items,
-        ]);
+        return $items;
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────

@@ -182,7 +182,7 @@ return [
     'SKU' => 'SKU',
     'Safe to run more than once: each purchase carries its order’s original timestamp, so a second pass is refused as a duplicate rather than doubling everyone’s history.' => 'Safe to run more than once: each purchase carries its order’s original timestamp, so a second pass is refused as a duplicate rather than doubling everyone’s history.',
     'Save and reopen after changing this — the scope options below depend on it.' => 'Save and reopen after changing this — the scope options below depend on it.',
-    'Saves nothing — it just asks Recombee for the item-property list with the credentials above.' => 'Saves nothing — it just asks Recombee for the item-property list with the credentials above.',
+    'Saves nothing — it asks Recombee for the item-property list with the saved credentials, so save any changes above first.' => 'Saves nothing — it asks Recombee for the item-property list with the saved credentials, so save any changes above first.',
     'Scenario' => 'Scenario',
     'Scope' => 'Scope',
     'Seconds on the page before a view counts. Firing on load counts every bounce and every prefetch as interest.' => 'Seconds on the page before a view counts. Firing on load counts every bounce and every prefetch as interest.',
@@ -245,4 +245,7 @@ return [
     '{n, plural, =1{1 entry cleared} other{# entries cleared}}' => '{n, plural, =1{1 entry cleared} other{# entries cleared}}',
     '“{name}” is one of the properties Bee maintains itself.' => '“{name}” is one of the properties Bee maintains itself.',
     'Only admins can add or change sources, because they live in project config and can run Twig.' => 'Only admins can add or change sources, because they live in project config and can run Twig.',
+    'Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates.' => 'Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates.',
+    'User groups' => 'User groups',
+    'A user in any of the checked groups is included. Leave everything unchecked to include every user.' => 'A user in any of the checked groups is included. Leave everything unchecked to include every user.',
 ];

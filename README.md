@@ -301,7 +301,7 @@ be pushed before pointing Bee at a real database.
 
 | | Lite | Pro |
 | --- | :-: | :-: |
-| Catalog sync — entries, categories, assets, products, variants | ✓ | ✓ |
+| Catalog sync — entries, categories, assets, users, products, variants | ✓ | ✓ |
 | Detail views and purchases | ✓ | ✓ |
 | Recommend to user, recommend to item | ✓ | ✓ |
 | Twig API, element resolution, connection log, diagnostics | ✓ | ✓ |

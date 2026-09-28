@@ -1,5 +1,25 @@
 # Release Notes for Bee
 
+## 5.1.0 — 2026-09-28
+
+### Added
+
+- Users can now be a catalog source, scoped by user group — a user in any of the checked groups is
+  included ([#2](https://github.com/justinholtweb/craft-bee/issues/2)). Only active users are synced,
+  a user's photo maps to `imageUrl`, and activation, suspension, unlocking and group changes resync
+  the user even though Craft makes them without saving the element. Users are never returned by the
+  public JSON recommendation endpoint; recommend them with `craft.bee.recommend()` in your own
+  templates.
+
+### Fixed
+
+- Fixed the **Test connection** button in the plugin settings, which did nothing: Craft namespaces
+  plugin settings, so the button's id no longer matched the script
+  ([#1](https://github.com/justinholtweb/craft-bee/issues/1)). Its instructions now say that it
+  tests the saved credentials.
+- Recommended elements are now filtered by live status as well as by the element type's default
+  query status, which for users still includes suspended accounts.
+
 ## 5.0.1 — 2026-09-28
 
 ### Security

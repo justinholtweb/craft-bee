@@ -139,6 +139,16 @@ page uncacheable.
   `~/Sites/plugin-testing/vendor/justinholtweb/craft-bee` is a directory rather than a symlink,
   Composer installed the GitHub zip and every suite is testing old code. Fixed 2026-09-28 by moving
   `composer.craftcms.com` to the end of the harness's `repositories`.
+- **Plugin settings are rendered inside the `settings` namespace**, so `id="bee-test"` in the
+  markup is `settings-bee-test` in the page. Any `getElementById()` in `settings.twig` has to use
+  `'…'|namespaceInputId` or it silently finds nothing (GitHub #1).
+- **Users are not entries.** Their status is `active`, not `live` (use `Source::isLive()`, never a
+  status string comparison); they sit in several groups (`Source::groupUidsFor()`); Craft's Users
+  service changes status and groups *without* an element save, so `Plugin` listens to its events;
+  and a user query's default status still returns suspended accounts, so resolution filters by
+  `Source::isLive()` too.
+- **The element save handlers are only attached when Bee is configured at boot.** A test that
+  configures Bee in memory has to attach them itself (`_registerElementHandlers` via reflection).
 - **A cache counter read then written back is not a rate limit** under parallel requests — they all
   read the same number. `TrackController::rateLimit()` holds Craft's mutex around it.
 
@@ -150,7 +160,7 @@ No local PHP on this Mac. Everything runs inside the plugin-testing container:
 
 ```sh
 cd ~/Sites/plugin-testing
-ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 102 checks
+ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 111 checks
 ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 checks
 ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
 bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  10 checks

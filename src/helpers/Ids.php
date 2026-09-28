@@ -129,7 +129,7 @@ abstract class Ids
      */
     public static function supportedTypes(): array
     {
-        $types = [Entry::class, Category::class, Asset::class];
+        $types = [Entry::class, Category::class, Asset::class, UserElement::class];
 
         if (Plugin::commerceIsReady()) {
             $types[] = 'craft\\commerce\\elements\\Product';

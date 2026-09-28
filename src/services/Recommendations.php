@@ -14,6 +14,7 @@ use justinholtweb\bee\events\RecommendationEvent;
 use justinholtweb\bee\helpers\Ids;
 use justinholtweb\bee\helpers\Reql;
 use justinholtweb\bee\models\RecommendationSet;
+use justinholtweb\bee\models\Source;
 use justinholtweb\bee\Plugin;
 use justinholtweb\bee\records\RecommRecord;
 use yii\base\Component;
@@ -319,6 +320,12 @@ class Recommendations extends Component
                 }
 
                 foreach ($elements as $element) {
+                    // The query's default status is not enough on its own: a user query's default
+                    // still returns suspended accounts.
+                    if (!Source::isLive($element)) {
+                        continue;
+                    }
+
                     $key = $class . ':' . $querySiteId . ':' . $element->id;
 
                     if (isset($order[$key])) {

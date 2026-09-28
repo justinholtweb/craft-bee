@@ -3,12 +3,12 @@
 namespace justinholtweb\bee\services;
 
 use Craft;
-use craft\base\Element;
 use craft\base\ElementInterface;
 use craft\db\Query;
 use craft\elements\Asset;
 use craft\elements\Category;
 use craft\elements\Entry;
+use craft\elements\User;
 use craft\helpers\Db;
 use craft\helpers\Json;
 use DateTime;
@@ -55,7 +55,7 @@ class Catalog extends Component
             'siteId' => (int)$element->siteId,
             'sourceHandle' => Props::coerce($this->handleFor($element), Props::TYPE_STRING),
             'slug' => Props::coerce($element->slug ?? null, Props::TYPE_STRING),
-            'enabled' => $element->getStatus() === Element::STATUS_ENABLED || $element->getStatus() === 'live',
+            'enabled' => Source::isLive($element),
             'postDate' => Props::coerce($element->postDate ?? $element->dateCreated ?? null, Props::TYPE_TIMESTAMP),
             'expiryDate' => Props::coerce($element->expiryDate ?? null, Props::TYPE_TIMESTAMP),
             'updatedAt' => Props::coerce($element->dateUpdated ?? null, Props::TYPE_TIMESTAMP),
@@ -558,6 +558,15 @@ class Catalog extends Component
     {
         if ($element instanceof Asset) {
             return $element->kind === Asset::KIND_IMAGE ? $element->getUrl() : null;
+        }
+
+        // A user's photo is not in their field layout, so it has to be asked for by name.
+        if ($element instanceof User) {
+            try {
+                return $element->getPhoto()?->getUrl();
+            } catch (\Throwable) {
+                return null;
+            }
         }
 
         $urls = $this->allImageUrls($element);

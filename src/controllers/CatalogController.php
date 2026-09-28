@@ -343,6 +343,11 @@ class CatalogController extends Controller
                     $options[] = ['label' => $volume->name, 'value' => $volume->uid];
                 }
                 break;
+            case \craft\elements\User::class:
+                foreach (Craft::$app->getUserGroups()->getAllGroups() as $group) {
+                    $options[] = ['label' => $group->name, 'value' => $group->uid];
+                }
+                break;
             default:
                 if (Plugin::commerceIsReady() && str_contains($elementType, 'commerce')) {
                     foreach (\craft\commerce\Plugin::getInstance()->getProductTypes()->getAllProductTypes() as $type) {

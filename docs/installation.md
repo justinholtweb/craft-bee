@@ -73,7 +73,7 @@ anything. A brand-new Recombee database knows nothing and recommends accordingly
 | | Lite | Pro |
 |---|---|---|
 | **Price** | Free | **$149**, then $59/year |
-| Catalog sync — entries, categories, assets, products, variants | ✓ | ✓ |
+| Catalog sync — entries, categories, assets, users, products, variants | ✓ | ✓ |
 | Detail views and purchases | ✓ | ✓ |
 | Recommend to user, recommend to item | ✓ | ✓ |
 | Twig API, element resolution, connection log, diagnostics | ✓ | ✓ |

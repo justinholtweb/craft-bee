@@ -11,10 +11,13 @@ use craft\events\ElementEvent;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\events\UserEvent;
+use craft\events\UserGroupsAssignEvent;
 use craft\helpers\UrlHelper;
 use craft\services\Elements;
 use craft\services\ProjectConfig;
 use craft\services\UserPermissions;
+use craft\services\Users;
 use craft\web\Application as WebApplication;
 use craft\web\twig\variables\Cp;
 use craft\web\twig\variables\CraftVariable;
@@ -358,6 +361,33 @@ class Plugin extends BasePlugin
             Elements::EVENT_AFTER_RESTORE_ELEMENT,
             function(ElementEvent $event): void {
                 $this->_queueSync($event->element);
+            },
+        );
+
+        // A user's status and groups change without an element save — Craft's Users service writes
+        // them directly — so a Users source would otherwise keep a suspended member recommended, or
+        // miss one who has just joined the group it syncs.
+        foreach ([
+            Users::EVENT_AFTER_ACTIVATE_USER,
+            Users::EVENT_AFTER_DEACTIVATE_USER,
+            Users::EVENT_AFTER_SUSPEND_USER,
+            Users::EVENT_AFTER_UNSUSPEND_USER,
+            Users::EVENT_AFTER_UNLOCK_USER,
+        ] as $eventName) {
+            Event::on(Users::class, $eventName, function(UserEvent $event): void {
+                $this->_queueSync($event->user);
+            });
+        }
+
+        Event::on(
+            Users::class,
+            Users::EVENT_AFTER_ASSIGN_USER_TO_GROUPS,
+            function(UserGroupsAssignEvent $event): void {
+                $user = Craft::$app->getUsers()->getUserById($event->userId);
+
+                if ($user !== null) {
+                    $this->_queueSync($user);
+                }
             },
         );
 

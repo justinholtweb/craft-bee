@@ -49,10 +49,20 @@
     disabled: readOnly,
   }) }}
 
+  {% set isUserSource = source.elementType == 'craft\\elements\\User' %}
+
+  {% if isUserSource %}
+    <div class="pane">
+      <p class="light">{{ "Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates."|t('bee') }}</p>
+    </div>
+  {% endif %}
+
   {% if groupOptions|length %}
     {{ forms.checkboxSelectField({
-      label: "Scope"|t('bee'),
-      instructions: "Leave everything unchecked to include all of them."|t('bee'),
+      label: isUserSource ? "User groups"|t('bee') : "Scope"|t('bee'),
+      instructions: isUserSource
+        ? "A user in any of the checked groups is included. Leave everything unchecked to include every user."|t('bee')
+        : "Leave everything unchecked to include all of them."|t('bee'),
       id: 'groupUids',
       name: 'groupUids',
       options: groupOptions,

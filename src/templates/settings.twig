@@ -64,7 +64,7 @@
       <button type="button" class="btn" id="bee-test">{{ "Test connection"|t('bee') }}</button>
       <span id="bee-test-result" class="light bee-inline-note"></span>
     </div>
-    <div class="instructions"><p>{{ "Saves nothing — it just asks Recombee for the item-property list with the credentials above."|t('bee') }}</p></div>
+    <div class="instructions"><p>{{ "Saves nothing — it asks Recombee for the item-property list with the saved credentials, so save any changes above first."|t('bee') }}</p></div>
   </div>
 
   <hr>
@@ -363,12 +363,18 @@
 
 </div>
 
+{# Craft renders plugin settings inside the `settings` namespace, so the markup's `bee-test` is
+   `settings-bee-test` in the page. The ids are namespaced here the same way, or the lookup finds
+   nothing and the button silently does nothing (GitHub issue #1). #}
+{% set testButtonId = 'bee-test'|namespaceInputId %}
+{% set testResultId = 'bee-test-result'|namespaceInputId %}
+
 {% js %}
 // The settings screen is already inside Craft's own <form>, so this posts on its own rather than
 // nesting a second one — a nested form silently swallows the outer one's submit in every browser.
-document.getElementById('bee-test').addEventListener('click', function() {
+document.getElementById({{ testButtonId|json_encode|raw }}).addEventListener('click', function() {
   var button = this;
-  var result = document.getElementById('bee-test-result');
+  var result = document.getElementById({{ testResultId|json_encode|raw }});
   button.classList.add('loading');
   result.textContent = '';
   result.classList.remove('error');

@@ -5,6 +5,7 @@ namespace justinholtweb\bee\models;
 use Craft;
 use craft\base\ElementInterface;
 use craft\base\Model;
+use craft\elements\User;
 use craft\helpers\StringHelper;
 use justinholtweb\bee\helpers\Props;
 
@@ -111,7 +112,7 @@ class Source extends Model
             return false;
         }
 
-        if ($this->groupUids !== [] && !in_array($this->groupUidFor($element), $this->groupUids, true)) {
+        if ($this->groupUids !== [] && array_intersect($this->groupUidsFor($element), $this->groupUids) === []) {
             return false;
         }
 
@@ -135,11 +136,48 @@ class Source extends Model
             return false;
         }
 
-        if ($this->liveOnly && $element->getStatus() !== 'live' && $element->getStatus() !== 'enabled') {
+        if ($this->liveOnly && !self::isLive($element)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Whether an element is in a state a visitor could see it in.
+     *
+     * Entries and products say `live`, most other elements `enabled`. Users say neither: an active
+     * account is `active`, and `locked` is a temporary login lockout rather than anything to do with
+     * whether the profile is public, so both count. Suspended, pending and inactive users do not.
+     */
+    public static function isLive(ElementInterface $element): bool
+    {
+        $status = $element->getStatus();
+
+        if ($element instanceof User) {
+            return in_array($status, [User::STATUS_ACTIVE, User::STATUS_LOCKED], true);
+        }
+
+        return $status === 'live' || $status === 'enabled';
+    }
+
+    /**
+     * Every group UID an element belongs to, for matching against {@see $groupUids}.
+     *
+     * One for almost everything; a user can be in several groups, and a source that names any of
+     * them claims the user.
+     *
+     * @return string[]
+     */
+    public function groupUidsFor(ElementInterface $element): array
+    {
+        if ($element instanceof User) {
+            return array_values(array_filter(array_map(static fn($group) => $group->uid, $element->getGroups())));
+        }
+
+        $uid = $this->groupUidFor($element);
+
+        return $uid !== null ? [$uid] : [];
     }
 
     /**

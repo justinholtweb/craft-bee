@@ -25,6 +25,7 @@ require $root . '/bootstrap.php';
 $app = require CRAFT_VENDOR_PATH . '/craftcms/cms/bootstrap/console.php';
 
 use craft\elements\Entry;
+use craft\elements\User;
 use craft\helpers\Json;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Handler\MockHandler;
@@ -79,6 +80,7 @@ $settings = $plugin->getSettings();
 $originalSettings = $settings->toArray();
 $originalEdition = $plugin->edition;
 $createdSourceUids = [];
+$createdUsers = [];
 
 /**
  * Run a closure with a mock transport in place. Returns [$result, $history].
@@ -775,6 +777,133 @@ try {
     });
 
     // ─────────────────────────────────────────────────────────────────────────────────────────
+    section('Users as items');
+
+    // GitHub issue #2. Users are not localized, change status and groups without an element save,
+    // belong to several groups at once, and say `active` rather than `live` — each of which the
+    // entry-shaped code paths got wrong in their own way.
+    $groups = Craft::$app->getUserGroups()->getAllGroups();
+
+    if (count($groups) < 2) {
+        throw new RuntimeException('The harness needs at least two user groups for the Users checks.');
+    }
+
+    [$groupA, $groupB] = $groups;
+    $suffix = substr(bin2hex(random_bytes(3)), 0, 6);
+    $makeUser = static function(string $name, array $groupIds) use ($suffix, &$createdUsers): User {
+        $user = new User();
+        $user->username = "bee-$name-$suffix";
+        $user->email = "bee-$name-$suffix@example.com";
+        $user->fullName = "Bee " . ucfirst($name) . " $suffix";
+        Craft::$app->getElements()->saveElement($user, false);
+        Craft::$app->getUsers()->activateUser($user);
+        Craft::$app->getUsers()->assignUserToGroups($user->id, $groupIds);
+        $createdUsers[] = $user;
+
+        return Craft::$app->getUsers()->getUserById($user->id);
+    };
+
+    $member = $makeUser('member', [$groupA->id]);
+    $both = $makeUser('both', [$groupB->id, $groupA->id]);
+    $outsider = $makeUser('outsider', [$groupB->id]);
+    $suspended = $makeUser('suspended', [$groupA->id]);
+    Craft::$app->getUsers()->suspendUser($suspended);
+    $suspended = Craft::$app->getUsers()->getUserById($suspended->id);
+
+    $userSource = new Source([
+        'name' => 'Bee test members',
+        'elementType' => User::class,
+        'groupUids' => [$groupA->uid],
+        'liveOnly' => true,
+    ]);
+
+    check('Users are offered as a catalog element type', function() use ($plugin, $userSource, &$createdSourceUids) {
+        $saved = $plugin->getSources()->save($userSource);
+        $createdSourceUids[] = $userSource->uid;
+
+        return in_array(User::class, Ids::supportedTypes(), true) && $saved
+            ?: 'errors: ' . Json::encode($userSource->getErrors());
+    });
+
+    check('a Users source claims members of its groups, even when they are in other groups too', function() use ($plugin, $userSource, $member, $both, $outsider) {
+        $claims = static fn(User $u) => $plugin->getSources()->forElement($u)?->uid === $userSource->uid;
+
+        return $claims($member) && $claims($both) && !$claims($outsider)
+            ?: Json::encode(['member' => $claims($member), 'both' => $claims($both), 'outsider' => $claims($outsider)]);
+    });
+
+    check('an active user is live and a suspended one is not', function() use ($userSource, $member, $suspended) {
+        return $userSource->includes($member) && !$userSource->includes($suspended)
+            ?: Json::encode([$member->getStatus(), $suspended->getStatus()]);
+    });
+
+    check('a user becomes an item with their name as the title and marked enabled', function() use ($plugin, $userSource, $member) {
+        $values = $plugin->getCatalog()->buildItem($member, $userSource);
+
+        return ($values['title'] ?? null) === $member->fullName
+            && ($values['enabled'] ?? null) === true
+            && ($values['itemType'] ?? null) === 'user'
+            && !isset($values['email'])
+            ?: Json::encode($values);
+    });
+
+    check('a user syncs once, under their own site, with a u-prefixed item ID', function() use ($plugin, $member) {
+        [$status, $history] = withMock([jsonResponse('ok')], fn() => $plugin->getCatalog()->syncElement($member, true));
+        $record = SyncRecord::findOne(['elementId' => $member->id]);
+
+        return $status === SyncRecord::STATUS_SYNCED
+            && $record !== null
+            && str_starts_with((string)$record->itemId, 'u' . $member->id)
+            && (int)SyncRecord::find()->where(['elementId' => $member->id])->count() === 1
+            ?: "status=$status item=" . ($record->itemId ?? 'none');
+    });
+
+    // Craft's Users service changes status and groups without an element save, so Bee listens for
+    // those events itself. What it queues is private; read it rather than wait for a request to end.
+    //
+    // The handlers are only attached at boot when Bee is already connected, and this harness's Bee
+    // is connected in memory by this script, after boot. Attach them now. A duplicate registration
+    // is harmless: the pending queue is keyed by element.
+    (new ReflectionMethod($plugin, '_registerElementHandlers'))->invoke($plugin);
+    $pendingFor = static function(User $user) use ($plugin): bool {
+        $pending = (new ReflectionProperty($plugin, 'pending'))->getValue($plugin);
+
+        return isset($pending[User::class][$user->id . ':' . $user->siteId]);
+    };
+    $clearPending = static fn() => (new ReflectionProperty($plugin, 'pending'))->setValue($plugin, []);
+
+    check('suspending a synced user queues a resync', function() use ($member, $pendingFor, $clearPending) {
+        $clearPending();
+        Craft::$app->getUsers()->suspendUser($member);
+        $queued = $pendingFor($member);
+        Craft::$app->getUsers()->unsuspendUser($member);
+
+        return $queued ?: 'nothing was queued';
+    });
+
+    check('adding a user to a synced group queues a sync', function() use ($outsider, $groupA, $groupB, $pendingFor, $clearPending) {
+        $clearPending();
+        Craft::$app->getUsers()->assignUserToGroups($outsider->id, [$groupB->id, $groupA->id]);
+        $queued = $pendingFor($outsider);
+        Craft::$app->getUsers()->assignUserToGroups($outsider->id, [$groupB->id]);
+        $clearPending();
+
+        return $queued ?: 'nothing was queued';
+    });
+
+    check('recommended users resolve when active and not when suspended', function() use ($plugin, $member, $suspended) {
+        $resolved = $plugin->getRecommendations()->resolveElements([Ids::forElement($member), Ids::forElement($suspended)]);
+        $ids = array_map(static fn($e) => (int)$e->id, $resolved);
+
+        return $ids === [(int)$member->id] ?: Json::encode($ids);
+    });
+
+    check('the public JSON endpoint never returns users', function() use ($member, $entry) {
+        $items = \justinholtweb\bee\controllers\TrackController::publicItems([$member, $entry]);
+
+        return count($items) === 1 && $items[0]['id'] === Ids::forElement($entry) ?: Json::encode($items);
+    });
+
     section('Interactions');
 
     check('Lite sends detail views and purchases', function() use ($plugin, $entry) {
@@ -1335,6 +1464,10 @@ try {
 
     foreach ($createdSourceUids as $uid) {
         Plugin::getInstance()->getSources()->delete($uid);
+    }
+
+    foreach ($createdUsers as $user) {
+        Craft::$app->getElements()->deleteElement($user, true);
     }
 
     Craft::$app->getProjectConfig()->flush();
