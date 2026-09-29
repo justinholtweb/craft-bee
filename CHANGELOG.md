@@ -1,5 +1,22 @@
 # Release Notes for Bee
 
+## 5.1.1 — 2026-09-29
+
+### Fixed
+
+- A Twig mapping for a **set** or **image list** can now output a JSON array
+  (`{{ values|json_encode }}`) as well as one value per line. A JSON array used to arrive as a
+  single value, and printing an array directly failed so the property was left out
+  ([#3](https://github.com/justinholtweb/craft-bee/issues/3)). Commas are still not separators,
+  because a value can contain one. The source screen and the docs show both formats.
+- The Bee navigation item now stays selected on the Log and Diagnostics screens
+  ([#4](https://github.com/justinholtweb/craft-bee/issues/4)). Someone who can see the log but not
+  the catalog is taken to the log.
+- Changing a source's **Element type** now switches the scope options (sections, groups, volumes,
+  entry types) straight away instead of after a save
+  ([#5](https://github.com/justinholtweb/craft-bee/issues/5)). Saving keeps only scope choices that
+  belong to the chosen type, so a switched source can no longer keep a scope that matches nothing.
+
 ## 5.1.0 — 2026-09-28
 
 ### Added

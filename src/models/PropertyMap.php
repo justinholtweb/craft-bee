@@ -101,6 +101,31 @@ class PropertyMap extends Model
         return $element->{$this->value} ?? null;
     }
 
+    /**
+     * Several values out of one rendered string: a JSON array if it is one, else one per line.
+     *
+     * @return string[]
+     */
+    public static function splitList(string $rendered): array
+    {
+        $trimmed = trim($rendered);
+
+        if (str_starts_with($trimmed, '[')) {
+            $decoded = json_decode($trimmed, true);
+
+            if (is_array($decoded) && array_is_list($decoded)) {
+                $values = array_map(
+                    static fn($v) => is_scalar($v) ? trim((string)$v) : '',
+                    $decoded,
+                );
+
+                return array_values(array_filter($values, static fn(string $v) => $v !== ''));
+            }
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/[\r\n]+/', $trimmed) ?: [])));
+    }
+
     private function renderTwig(ElementInterface $element): mixed
     {
         // Only admins can save a Twig property (sources are admin-only), which is what makes this
@@ -110,10 +135,13 @@ class PropertyMap extends Model
             ? $view->renderSandboxedObjectTemplate($this->value, $element, ['element' => $element])
             : $view->renderObjectTemplate($this->value, $element, ['element' => $element]);
 
-        // A set built in Twig comes back as a string; splitting on newlines is the least surprising
-        // way to let a template produce several values.
+        // A set built in Twig comes back as a string. Two ways to produce several values: a JSON
+        // array (`{{ myValues(object)|json_encode }}`), or one value per line
+        // (`{{ myValues(object)|join("\n") }}`). Not commas — set values contain them ("Charlotte,
+        // NC"). Printing an array directly can't work: Twig has no string for it, so the render
+        // fails and the property is left out of the payload (GitHub #3).
         if ($this->type === Props::TYPE_SET || $this->type === Props::TYPE_IMAGE_LIST) {
-            return array_values(array_filter(array_map('trim', preg_split('/[\r\n]+/', $rendered) ?: [])));
+            return self::splitList($rendered);
         }
 
         return StringHelper::trim($rendered);

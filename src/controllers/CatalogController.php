@@ -28,6 +28,16 @@ class CatalogController extends Controller
             return false;
         }
 
+        // The nav item links to `bee`, which lands here. Someone who may read the log but not the
+        // catalog goes there instead of meeting a 403 on their way into the section.
+        $user = Craft::$app->getUser();
+
+        if ($action->id === 'index' && !$user->checkPermission('bee-viewCatalog') && $user->checkPermission('bee-viewLog')) {
+            $this->redirect(UrlHelper::cpUrl('bee/log'));
+
+            return false;
+        }
+
         $this->requirePermission('bee-viewCatalog');
 
         return true;
@@ -67,8 +77,7 @@ class CatalogController extends Controller
             'source' => $source,
             'isNew' => $uid === null,
             'elementTypeOptions' => $this->elementTypeOptions(),
-            'groupOptions' => $this->groupOptions($source->elementType),
-            'typeOptions' => $this->typeOptions($source->elementType),
+            'scopeOptions' => $this->scopeOptions(),
             'propertyTypeOptions' => array_map(
                 static fn(string $t) => ['label' => Props::typeLabel($t), 'value' => $t],
                 Props::TYPES,
@@ -111,8 +120,10 @@ class CatalogController extends Controller
         $source->name = (string)$request->getBodyParam('name', '');
         $source->enabled = (bool)$request->getBodyParam('enabled', true);
         $source->elementType = (string)$request->getBodyParam('elementType', $source->elementType);
-        $source->groupUids = array_values(array_filter((array)$request->getBodyParam('groupUids', [])));
-        $source->typeUids = array_values(array_filter((array)$request->getBodyParam('typeUids', [])));
+        // Only UIDs that belong to the chosen element type: a section UID kept on a user source would
+        // match nothing, and the source would silently sync nobody.
+        $source->groupUids = $this->validUids($request->getBodyParam('groupUids', []), $this->groupOptions($source->elementType));
+        $source->typeUids = $this->validUids($request->getBodyParam('typeUids', []), $this->typeOptions($source->elementType));
         $source->liveOnly = (bool)$request->getBodyParam('liveOnly', true);
         $source->properties = $this->readProperties($request->getBodyParam('properties', []));
 
@@ -318,6 +329,39 @@ class CatalogController extends Controller
             static fn(string $class) => ['label' => $class::displayName(), 'value' => $class],
             Ids::supportedTypes(),
         );
+    }
+
+    /**
+     * The scope choices for every element type, so the edit screen can switch between them without
+     * a save.
+     *
+     * @return array<string, array{groups: array, types: array}>
+     */
+    private function scopeOptions(): array
+    {
+        $options = [];
+
+        foreach (Ids::supportedTypes() as $class) {
+            $options[$class] = [
+                'groups' => $this->groupOptions($class),
+                'types' => $this->typeOptions($class),
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function validUids(mixed $posted, array $options): array
+    {
+        $allowed = array_column($options, 'value');
+
+        return array_values(array_filter(
+            (array)$posted,
+            static fn($uid) => is_string($uid) && in_array($uid, $allowed, true),
+        ));
     }
 
     /**

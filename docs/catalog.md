@@ -40,6 +40,16 @@ things work differently from entries:
 - **Never through the public endpoint.** The anonymous JSON recommendation endpoint skips users, so
   it cannot be used to list your members. Show recommended users with `craft.bee.recommend()` in
   your own templates, where you decide what is printed.
+- **Deleting a user removes their item** straight away (with *Delete from Recombee on delete* on),
+  and restoring them from the trash sends it again. Their Recombee *user* — the visitor profile and
+  its interaction history — is a separate thing that Bee does not delete on its own. An admin can
+  delete it by posting its ID (`u` followed by the user's UID) to the `bee/settings/forget-user`
+  action, which removes it and every interaction attached to it.
+- **A user's entries do not follow them.** Suspending someone changes nothing about their entries,
+  so they stay in Recombee. Deleting someone doesn't either: Craft 5 leaves their entries live
+  without an author even when you choose *Delete their content*, and transferring them to another
+  user rewrites the author without saving the entries, so a mapped `author` property is stale until
+  the entry is next saved or `php craft bee/sync/catalog` runs.
 
 ## Which of them count
 
@@ -99,6 +109,18 @@ Each mapping is a Recombee property name, a type, and where to read it from:
 | Built-in mapper | One of the keys below |
 | Twig | An object template, e.g. `{{ object.author.fullName }}` |
 
+For a **set** or an **image list**, a Twig mapping outputs several values in one of two ways: a JSON
+array, or one value per line.
+
+```twig
+{{ myValues(object)|json_encode }}
+{{ myValues(object)|join("\n") }}
+```
+
+Commas do not separate values, because a value can contain one. Printing an array directly
+(`{{ myValues(object) }}`) does not work: Twig cannot turn an array into text, so the render fails
+and the property is left out. The payload preview shows exactly what is sent.
+
 ### Built-in mappers
 
 `image`, `images`, `author`, `categories`, `categoryIds`, `tags`, `wordCount`, `readingMinutes`,
@@ -117,6 +139,27 @@ Values are coerced to the declared type and **dropped if they cannot be**. A pro
 > **Recombee has one property namespace per database.** Two sources that both send `price` have to
 > agree on its type. Bee reports the disagreement on the catalog screen and fails the diagnostics
 > check rather than letting the second source silently break the first.
+
+### Values that aren't elements
+
+Tags kept as plain text — a comma-separated `topics` field, say — don't need to become elements, or
+Recombee items, to be useful. Send them as a `set` property on the entry:
+
+```twig
+{{ object.topics|split(',')|map(t => t|trim)|filter(t => t)|json_encode }}
+```
+
+Views and clicks on the entries already teach Recombee which topics a visitor leans towards. The
+property then lets you filter (`craft.bee.recommend({ filter: '"ai" in \'topics\'' })`) and, with a
+property-based segmentation on `topics` in the Recombee console, ask for the best of one topic with
+`craft.bee.segment('ai')` (Pro).
+
+If you do need interactions against a topic itself — a click on a topic page with no entry in
+sight — a module can create its own items with `Plugin::getInstance()->getClient()` and record
+interactions against their IDs, e.g. `getInteractions()->detailView('topic:ai')`. Bee leaves such
+items alone (an ID like `topic:ai` never parses as an element, and `bee/sync/purge` only touches
+items Bee synced). Give them an `itemType` of their own and filter on it, or they will be returned
+in, and silently shorten, your entry recommendations.
 
 Recombee needs a property to exist before an item can carry it. Press **Sync item properties**, or
 run `php craft bee/sync/properties`.

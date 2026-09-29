@@ -189,6 +189,33 @@ try {
     // ─────────────────────────────────────────────────────────────────────────────────────────
     section('Property coercion');
 
+    check('a saved source keeps only scope UIDs that belong to its element type', function() {
+        // GitHub #5: the scope follows the element type, so a section left checked before the
+        // type was switched to Users would otherwise match nobody.
+        $controller = new \justinholtweb\bee\controllers\CatalogController('catalog', Plugin::getInstance());
+        $call = static fn(string $method, ...$args) => (new \ReflectionMethod($controller, $method))->invoke($controller, ...$args);
+        $section = Craft::$app->getEntries()->getAllSections()[0] ?? null;
+        $group = Craft::$app->getUserGroups()->getAllGroups()[0] ?? null;
+
+        if ($section === null || $group === null) {
+            return 'needs a section and a user group';
+        }
+
+        $kept = $call('validUids', [$section->uid, $group->uid, ['nested'], ''], $call('groupOptions', \craft\elements\User::class));
+
+        return $kept === [$group->uid] ?: Json::encode($kept);
+    });
+
+    check('a Twig set can be a JSON array or one value per line, never split on commas', function() {
+        // GitHub #3: printing a JSON array produced one item, the JSON string itself.
+        $json = PropertyMap::splitList('["red","blue","Charlotte, NC"]');
+        $lines = PropertyMap::splitList("red\nblue\n\n green ");
+        $comma = PropertyMap::splitList('Charlotte, NC');
+
+        return $json === ['red', 'blue', 'Charlotte, NC'] && $lines === ['red', 'blue', 'green'] && $comma === ['Charlotte, NC']
+            ?: Json::encode([$json, $lines, $comma]);
+    });
+
     check('numbers are typed, not stringified', function() {
         return Props::coerce('12.50', Props::TYPE_DOUBLE) === 12.5
             && Props::coerce('7', Props::TYPE_INT) === 7

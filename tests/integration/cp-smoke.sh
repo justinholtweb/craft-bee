@@ -88,7 +88,9 @@ echo
 echo "Screens"
 screen 'Catalog'            'bee/catalog'      'Preview a payload'
 screen 'New source'         'bee/catalog/new'  'Built-in mappers'
+screen 'New source offers every type’s scope' 'bee/catalog/new' 'data-bee-scope="craft\elements\User" hidden'
 screen 'Log'                'bee/log'          'Connection log'
+screen 'Log keeps Bee selected in the nav' 'bee/log' 'id="nav-bee-link" class="sidebar-action sel"'
 screen 'Log, failures only' 'bee/log?filter=failures' 'Connection log'
 screen 'Diagnostics'        'bee/diagnostics'  'Diagnostics'
 screen 'Settings'           'settings/plugins/bee' 'Private token'

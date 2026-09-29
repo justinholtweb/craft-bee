@@ -86,7 +86,6 @@ return [
     'Field handle, attribute, mapper key or Twig' => 'Field handle, attribute, mapper key or Twig',
     'Filter out unpublished items' => 'Filter out unpublished items',
     'First image URL' => 'First image URL',
-    'For a set or an image list, output one value per line.' => 'For a set or an image list, output one value per line.',
     'From the Recombee console. Use an environment variable so staging and production can point at different databases.' => 'From the Recombee console. Use an environment variable so staging and production can point at different databases.',
     'High' => 'High',
     'Higher means fewer, better recommendations — and sometimes none at all.' => 'Higher means fewer, better recommendations — and sometimes none at all.',
@@ -181,7 +180,6 @@ return [
     'Rotation time' => 'Rotation time',
     'SKU' => 'SKU',
     'Safe to run more than once: each purchase carries its order’s original timestamp, so a second pass is refused as a duplicate rather than doubling everyone’s history.' => 'Safe to run more than once: each purchase carries its order’s original timestamp, so a second pass is refused as a duplicate rather than doubling everyone’s history.',
-    'Save and reopen after changing this — the scope options below depend on it.' => 'Save and reopen after changing this — the scope options below depend on it.',
     'Saves nothing — it asks Recombee for the item-property list with the saved credentials, so save any changes above first.' => 'Saves nothing — it asks Recombee for the item-property list with the saved credentials, so save any changes above first.',
     'Scenario' => 'Scenario',
     'Scope' => 'Scope',
@@ -248,4 +246,7 @@ return [
     'Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates.' => 'Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates.',
     'User groups' => 'User groups',
     'A user in any of the checked groups is included. Leave everything unchecked to include every user.' => 'A user in any of the checked groups is included. Leave everything unchecked to include every user.',
+    'For a set or an image list, output a JSON array or one value per line — e.g.' => 'For a set or an image list, output a JSON array or one value per line — e.g.',
+    'or' => 'or',
+    'An array printed directly can’t be turned into text, so the property would be left out.' => 'An array printed directly can’t be turned into text, so the property would be left out.',
 ];

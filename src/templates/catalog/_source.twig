@@ -40,7 +40,6 @@
 
   {{ forms.selectField({
     label: "Element type"|t('bee'),
-    instructions: "Save and reopen after changing this — the scope options below depend on it."|t('bee'),
     id: 'elementType',
     name: 'elementType',
     options: elementTypeOptions,
@@ -49,38 +48,65 @@
     disabled: readOnly,
   }) }}
 
-  {% set isUserSource = source.elementType == 'craft\\elements\\User' %}
+  {#
+    The scope depends on the element type, so every type's scope is rendered and the one that
+    matches the select is shown (GitHub #5). The others are disabled as well as hidden, so they
+    are never posted.
+  #}
+  {% for option in elementTypeOptions %}
+    {% set scope = scopeOptions[option.value] %}
+    {% set isCurrent = option.value == source.elementType %}
+    {% set isUserSource = option.value == 'craft\\elements\\User' %}
+    <div data-bee-scope="{{ option.value }}"{% if not isCurrent %} hidden{% endif %}>
+      {% if isUserSource %}
+        <div class="pane">
+          <p class="light">{{ "Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates."|t('bee') }}</p>
+        </div>
+      {% endif %}
 
-  {% if isUserSource %}
-    <div class="pane">
-      <p class="light">{{ "Users are sent to Recombee as items, with their full name as the title and whatever properties you map below — map only what you would be comfortable sharing with Recombee. Only active users are synced, and users are never returned by the public JSON recommendation endpoint; show them with `craft.bee.recommend()` in your own templates."|t('bee') }}</p>
+      {% if scope.groups|length %}
+        {{ forms.checkboxSelectField({
+          label: isUserSource ? "User groups"|t('bee') : "Scope"|t('bee'),
+          instructions: isUserSource
+            ? "A user in any of the checked groups is included. Leave everything unchecked to include every user."|t('bee')
+            : "Leave everything unchecked to include all of them."|t('bee'),
+          id: 'groupUids-' ~ loop.index,
+          name: 'groupUids',
+          options: scope.groups,
+          values: isCurrent ? source.groupUids : [],
+          disabled: readOnly or not isCurrent,
+        }) }}
+      {% endif %}
+
+      {% if scope.types|length %}
+        {{ forms.checkboxSelectField({
+          label: "Entry types"|t('bee'),
+          instructions: "Leave everything unchecked to include all of them."|t('bee'),
+          id: 'typeUids-' ~ loop.index,
+          name: 'typeUids',
+          options: scope.types,
+          values: isCurrent ? source.typeUids : [],
+          disabled: readOnly or not isCurrent,
+        }) }}
+      {% endif %}
     </div>
-  {% endif %}
+  {% endfor %}
 
-  {% if groupOptions|length %}
-    {{ forms.checkboxSelectField({
-      label: isUserSource ? "User groups"|t('bee') : "Scope"|t('bee'),
-      instructions: isUserSource
-        ? "A user in any of the checked groups is included. Leave everything unchecked to include every user."|t('bee')
-        : "Leave everything unchecked to include all of them."|t('bee'),
-      id: 'groupUids',
-      name: 'groupUids',
-      options: groupOptions,
-      values: source.groupUids,
-      disabled: readOnly,
-    }) }}
-  {% endif %}
-
-  {% if typeOptions|length %}
-    {{ forms.checkboxSelectField({
-      label: "Entry types"|t('bee'),
-      instructions: "Leave everything unchecked to include all of them."|t('bee'),
-      id: 'typeUids',
-      name: 'typeUids',
-      options: typeOptions,
-      values: source.typeUids,
-      disabled: readOnly,
-    }) }}
+  {% if not readOnly %}
+    {% js %}
+      (() => {
+        const select = document.getElementById('elementType');
+        const show = () => {
+          document.querySelectorAll('[data-bee-scope]').forEach(scope => {
+            const current = scope.dataset.beeScope === select.value;
+            scope.hidden = !current;
+            scope.querySelectorAll('input').forEach(input => { input.disabled = !current; });
+          });
+        };
+        select.addEventListener('change', show);
+        show();
+      })();
+    {% endjs %}
   {% endif %}
 
   {{ forms.lightswitchField({
@@ -156,7 +182,11 @@
     <p class="light">
       {{ "Rendered as an object template with the element in scope, e.g."|t('bee') }}
       <code>{% verbatim %}{{ object.author.fullName }}{% endverbatim %}</code>.
-      {{ "For a set or an image list, output one value per line."|t('bee') }}
+      {{ "For a set or an image list, output a JSON array or one value per line — e.g."|t('bee') }}
+      <code>{% verbatim %}{{ myValues(object)|json_encode }}{% endverbatim %}</code>
+      {{ "or"|t('bee') }}
+      <code>{% verbatim %}{{ myValues(object)|join("\n") }}{% endverbatim %}</code>.
+      {{ "An array printed directly can’t be turned into text, so the property would be left out."|t('bee') }}
     </p>
   </div>
 

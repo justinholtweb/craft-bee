@@ -218,7 +218,11 @@ class Plugin extends BasePlugin
         }
 
         $item['subnav'] = $subnav;
-        $item['url'] = 'bee/' . array_key_first($subnav);
+        // `bee`, not the first screen's own URL: Craft selects a nav item — and keeps its sub-nav
+        // open — only when the path is its URL or starts with it and a slash, so `bee/catalog`
+        // left the section looking closed on `bee/log` and `bee/diagnostics` (GitHub #4). `bee`
+        // routes to the catalog, which sends anyone who can't see it to their first screen.
+        $item['url'] = 'bee';
 
         return $item;
     }

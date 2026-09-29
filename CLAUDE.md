@@ -160,10 +160,10 @@ No local PHP on this Mac. Everything runs inside the plugin-testing container:
 
 ```sh
 cd ~/Sites/plugin-testing
-ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 111 checks
+ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 113 checks
 ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 checks
 ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
-bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  10 checks
+bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  12 checks
 ddev exec bash -c 'find /var/www/craft-bee/src -name "*.php" -print0 | xargs -0 -n1 php -l'
 ```
 
