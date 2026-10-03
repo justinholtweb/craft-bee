@@ -1,5 +1,13 @@
 # Release Notes for Bee
 
+## 5.1.2 — 2026-10-03
+
+### Fixed
+
+- After you change a source's **Element type**, the new scope options (for example a user source's
+  **User groups**) no longer look faded and disabled while still being clickable
+  ([#5](https://github.com/justinholtweb/craft-bee/issues/5)).
+
 ## 5.1.1 — 2026-09-29
 
 ### Fixed

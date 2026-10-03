@@ -101,6 +101,9 @@
             const current = scope.dataset.beeScope === select.value;
             scope.hidden = !current;
             scope.querySelectorAll('input').forEach(input => { input.disabled = !current; });
+            // Craft also puts a `disabled` class on the field wrapper, which is what fades it and
+            // shows the not-allowed cursor; re-enabling the inputs alone leaves it looking off (#5).
+            scope.querySelectorAll('.field').forEach(field => { field.classList.toggle('disabled', !current); });
           });
         };
         select.addEventListener('change', show);
