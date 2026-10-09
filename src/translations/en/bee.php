@@ -153,6 +153,7 @@ return [
     'Purge excluded and failed items' => 'Purge excluded and failed items',
     'Push an element to Recombee when it is saved, and remove it when it is unpublished or deleted.' => 'Push an element to Recombee when it is saved, and remove it when it is unpublished or deleted.',
     'Queue backfill' => 'Queue backfill',
+    'Query recommendations and search' => 'Query recommendations and search',
     'Re-send everything (ignore fingerprints)' => 'Re-send everything (ignore fingerprints)',
     'Read from' => 'Read from',
     'Reading time (minutes)' => 'Reading time (minutes)',

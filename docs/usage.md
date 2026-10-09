@@ -146,6 +146,9 @@ them *because* Bee attached the `recommId`.
 | `craft.bee.isPro` | Whether this is the Pro edition. |
 | `craft.bee.hasConsent` | Whether consent has been granted. |
 
+For a headless front end, the same three requests are GraphQL queries — `beeRecommend`,
+`beeRelated` and `beeSearch`. See [GraphQL](graphql).
+
 ## Multi-site
 
 Recommendations resolve in the current site by default. Pass `siteId` to resolve elsewhere:

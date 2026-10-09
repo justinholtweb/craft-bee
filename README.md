@@ -31,7 +31,8 @@ time. Commerce's order funnel becomes purchases and cart additions. Everything e
 ratings, view portions — is a one-line Twig or JavaScript call.
 
 **Recommendations and search.** Personalised recommendations, related items, item segments and
-Recombee's own personalised search, all returning Craft elements.
+Recombee's own personalised search, all returning Craft elements — in Twig, or over GraphQL for a
+headless front end.
 
 **Attribution.** Bee records which recommendation put an item in front of a visitor and attaches
 that `recommId` to the interaction that follows. That is the only way Recombee can score — or learn
@@ -179,6 +180,29 @@ recommendations are working.
 
 ---
 
+## GraphQL
+
+For headless front ends, Bee adds `beeRecommend`, `beeRelated` and `beeSearch` to Craft's GraphQL
+API. Grant **Bee → Query recommendations and search** on a schema, then:
+
+```graphql
+{
+  beeRelated(elementId: 1234, count: 4, scenario: "product-detail") {
+    recommId
+    itemIds
+    elements { id title url ... on clothing_Product { defaultPrice } }
+  }
+}
+```
+
+The visitor comes from the request's session and Bee's guest cookie, never from an argument — there
+is no `userId` — and there is no ReQL `filter` either. Elements come back only when the schema can
+read their section, group, volume or product type, and these queries skip Craft's GraphQL result
+cache, which is keyed on the query rather than the visitor. **Pro.** See
+[the GraphQL docs](https://justinholt.com/plugins/craft-bee/docs/graphql).
+
+---
+
 ## Tracking
 
 The front-end runtime handles the usual case on its own. Tell it what the page is about:
@@ -315,6 +339,7 @@ be pushed before pointing Bee at a real database.
 | Attribution ledger and the recommendations report | | ✓ |
 | Historic Commerce order backfill | | ✓ |
 | Client-side recommendations endpoint | | ✓ |
+| GraphQL queries (`beeRecommend`, `beeRelated`, `beeSearch`) | | ✓ |
 
 Lite is a real integration, not a teaser: detail views and purchases are the pair that make a
 recommender work at all. Everything in Pro sharpens it.

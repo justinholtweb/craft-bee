@@ -1,5 +1,23 @@
 # Release Notes for Bee
 
+## Unreleased
+
+### Added
+
+- GraphQL queries for headless front ends: `beeRecommend`, `beeRelated` and `beeSearch` return
+  Craft elements in Recombee's order, with the `recommId` and the matching item IDs. Grant
+  **Bee → Query recommendations and search** on a schema to use them. **Pro.**
+- The visitor is taken from the request's session and Bee's guest cookie. There is no `userId`
+  argument and no ReQL `filter`, so a shared token cannot read someone else's recommendations or
+  page through the catalog.
+- Results are limited to what the schema can read: an element in a section, group, volume or
+  product type the schema has no access to is left out, and so is its item ID. `beeRelated` only
+  accepts an element that is live and already in the catalog, so it cannot create empty items in
+  Recombee.
+- Queries that use Bee skip Craft's GraphQL result cache. That cache is keyed on the query and not
+  the visitor, so it would otherwise hand one visitor's recommendations to the next person who sent
+  the same query.
+
 ## 5.1.2 — 2026-10-03
 
 ### Fixed

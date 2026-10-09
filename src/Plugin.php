@@ -8,6 +8,9 @@ use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
 use craft\elements\User as UserElement;
 use craft\events\ElementEvent;
+use craft\events\ExecuteGqlQueryEvent;
+use craft\events\RegisterGqlQueriesEvent;
+use craft\events\RegisterGqlSchemaComponentsEvent;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
@@ -15,6 +18,7 @@ use craft\events\UserEvent;
 use craft\events\UserGroupsAssignEvent;
 use craft\helpers\UrlHelper;
 use craft\services\Elements;
+use craft\services\Gql;
 use craft\services\ProjectConfig;
 use craft\services\UserPermissions;
 use craft\services\Users;
@@ -23,6 +27,8 @@ use craft\web\twig\variables\Cp;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use craft\web\View;
+use justinholtweb\bee\gql\queries\Bee as BeeQueries;
+use justinholtweb\bee\gql\resolvers\Recommendations as RecommendationsResolver;
 use justinholtweb\bee\jobs\SyncElements;
 use justinholtweb\bee\models\Settings;
 use justinholtweb\bee\services\Catalog;
@@ -105,6 +111,7 @@ class Plugin extends BasePlugin
         $this->_registerCpRoutes();
         $this->_registerSiteRoutes();
         $this->_registerProjectConfigHandlers();
+        $this->_registerGql();
 
         // Everything below talks to Recombee. None of it should be wired up on an install that has
         // not been connected yet — an unconfigured plugin should cost nothing.
@@ -334,6 +341,70 @@ class Plugin extends BasePlugin
 
                 if ($existing !== null) {
                     $event->config['bee']['sources'] = $existing;
+                }
+            },
+        );
+    }
+
+    /**
+     * `beeRecommend`, `beeRelated` and `beeSearch`. Pro.
+     *
+     * Registered whether or not Bee is connected yet, so a schema can be granted the component before
+     * the credentials go in; the resolvers answer `failed: true` until they do.
+     */
+    private function _registerGql(): void
+    {
+        Event::on(
+            Gql::class,
+            Gql::EVENT_REGISTER_GQL_SCHEMA_COMPONENTS,
+            function(RegisterGqlSchemaComponentsEvent $event): void {
+                if (!$this->isPro()) {
+                    return;
+                }
+
+                $event->queries[Craft::t('bee', 'Bee')] = [
+                    BeeQueries::SCOPE . ':read' => [
+                        'label' => Craft::t('bee', 'Query recommendations and search'),
+                    ],
+                ];
+            },
+        );
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_REGISTER_GQL_QUERIES,
+            static function(RegisterGqlQueriesEvent $event): void {
+                $event->queries = array_merge($event->queries, BeeQueries::getQueries());
+            },
+        );
+
+        // Craft caches a GraphQL result under the schema, the query and its variables — nothing
+        // about the visitor. Bee's answers are personalised, so a cached one would be served to the
+        // next person to send the same query: someone else's recommendations, and someone else's
+        // recommId attributing their clicks. Caching is switched off for that one execution.
+        $restore = null;
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_BEFORE_EXECUTE_GQL_QUERY,
+            function(ExecuteGqlQueryEvent $event) use (&$restore): void {
+                if (!RecommendationsResolver::isBeeQuery((string)$event->query)) {
+                    return;
+                }
+
+                $general = Craft::$app->getConfig()->getGeneral();
+                $restore = $general->enableGraphqlCaching;
+                $general->enableGraphqlCaching = false;
+            },
+        );
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_AFTER_EXECUTE_GQL_QUERY,
+            function() use (&$restore): void {
+                if ($restore !== null) {
+                    Craft::$app->getConfig()->getGeneral()->enableGraphqlCaching = $restore;
+                    $restore = null;
                 }
             },
         );

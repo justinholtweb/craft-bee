@@ -94,8 +94,29 @@ server-side only), rate limits per IP under a mutex so parallel requests can't s
 CSRF **deliberately off** — a beacon cannot carry a token, and a token in the page would make every
 page uncacheable.
 
+### GraphQL (Pro)
+
+`gql\queries\Bee` registers `beeRecommend`, `beeRelated` and `beeSearch` behind the
+`bee.recommendations:read` schema component; `gql\resolvers\Recommendations` calls the same
+`Recommendations` service as Twig. The arguments are a fixed list — **never add `userId` or a ReQL
+argument**: the visitor comes from `Identity` (session + guest cookie) and a token is shared by every
+caller of a schema. Every returned element is filtered against the schema's read scopes
+(`readable()`), and `itemIds` is rebuilt from the kept elements so a hidden item's ID doesn't leak.
+`beeRelated` requires a live, schema-readable, *synced* source element for the same ghost-item
+reason as the tracking endpoint. Resolvers never throw; they answer `failed: true`.
+
 ## Traps found while building this
 
+- **Craft's GraphQL result cache is keyed on schema + query + variables, not on the visitor.** A
+  personalised answer would be served to the next visitor sending the same query (their recommId
+  too). `Plugin::_registerGql()` turns `enableGraphqlCaching` off in memory for any document that
+  names a Bee query (`EVENT_BEFORE_EXECUTE_GQL_QUERY`) and restores it after. `graphql.php` proves
+  the leak exists without the guard.
+- **Craft builds the GraphQL `Query` type once per process**, from whichever schema and edition asked
+  first. A test that switches schema or edition has to `flushCaches()` — and that only works with
+  `lazyGqlTypes` on; a prebuilt schema after a flush fails with a duplicate `QueryArgument`, from Craft
+  itself. And outside debug mode Craft drops the "Cannot query field" rule, so a missing query answers
+  `data: []` instead of an error: pass `debugMode: true` to `executeQuery()` in tests.
 - **`allowAnonymous` wants Craft's bitmask, not a boolean.** `['record' => true]` throws
   `Invalid $allowAnonymous value` from the *controller constructor*, which surfaces as a 500 on the
   tracking endpoint and nowhere else. Use `self::ALLOW_ANONYMOUS_LIVE`.
@@ -163,6 +184,7 @@ cd ~/Sites/plugin-testing
 ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 113 checks
 ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 checks
 ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
+ddev exec php /var/www/craft-bee/tests/integration/graphql.php          #  25 checks, real executeQuery() per schema
 bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  12 checks
 ddev exec bash -c 'find /var/www/craft-bee/src -name "*.php" -print0 | xargs -0 -n1 php -l'
 ```
