@@ -1,7 +1,6 @@
 # Release Notes for Bee
 
-## Unreleased
-
+## 5.2.0 — 2026-10-09
 ### Added
 
 - GraphQL queries for headless front ends: `beeRecommend`, `beeRelated` and `beeSearch` return
