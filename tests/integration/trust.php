@@ -70,8 +70,11 @@ register_shutdown_function(function() use (&$user, &$sourceUid, $originalSetting
 
     // `saveModifiedConfigData()`, not `flush()`: a console script never reaches the end-of-request
     // hook that writes project config, so without it the restore silently never happens.
+    // And the YAML too: the database row goes with `saveModifiedConfigData()`, but the source's file
+    // stays in config/project and is re-applied to the next process as a pending change.
     Craft::$app->getPlugins()->savePluginSettings(Plugin::getInstance(), $originalSettings);
     Craft::$app->getProjectConfig()->saveModifiedConfigData();
+    Craft::$app->getProjectConfig()->writeYamlFiles(true);
 });
 
 // Persisted, because the HTTP requests below run in another process.
