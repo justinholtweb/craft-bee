@@ -1,5 +1,12 @@
 # Release Notes for Bee
 
+## 5.2.1 — 2026-10-13
+
+### Fixed
+
+- After you change a source's **Element type**, the new scope options no longer look faded with a
+  not-allowed cursor (#5). The 5.1.2 fix removed the `disabled` class from the wrong element.
+
 ## 5.2.0 — 2026-10-09
 ### Added
 
