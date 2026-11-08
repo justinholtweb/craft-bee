@@ -1461,6 +1461,39 @@ try {
         return !str_contains($js, 'userId') ?: 'the runtime mentions userId';
     });
 
+    check('craft.bee.runtimeConfig() writes the injected config for a bundled runtime', function() use ($plugin) {
+        $html = (string)(new justinholtweb\bee\twig\BeeVariable())->runtimeConfig();
+
+        if (!preg_match('/^ data-bee-config="([^"]*)"$/', $html, $m)) {
+            return 'got ' . $html;
+        }
+
+        // The same array the injected `Bee.start(…)` receives, so a bundled runtime cannot drift
+        // from the CP settings — and so it inherits the "nothing visitor-specific" check above.
+        return Json::decode(html_entity_decode($m[1], ENT_QUOTES)) === $plugin->runtimeConfig()
+            ?: 'decoded ' . html_entity_decode($m[1], ENT_QUOTES);
+    });
+
+    check('craft.bee.runtimeConfig() renders nothing while tracking is off', function() use ($settings) {
+        $settings->trackingEnabled = false;
+
+        try {
+            return (string)(new justinholtweb\bee\twig\BeeVariable())->runtimeConfig() === '';
+        } finally {
+            $settings->trackingEnabled = true;
+        }
+    });
+
+    check('the runtime ships an ES-module wrapper beside it, not a second copy', function() {
+        $mjs = file_get_contents(dirname(__DIR__, 2) . '/src/web/assets/runtime/dist/bee.mjs');
+
+        return $mjs !== false
+            && str_contains($mjs, "import './bee.js';")
+            && str_contains($mjs, 'export default window.Bee;')
+            && !str_contains($mjs, 'function')
+            ?: 'bee.mjs is missing or no longer just wraps bee.js';
+    });
+
     check('every translatable string is listed in the translation file', function() {
         $translations = require dirname(__DIR__, 2) . '/src/translations/en/bee.php';
         $missing = [];

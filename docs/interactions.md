@@ -24,7 +24,7 @@ That is the whole integration for detail views. The runtime will:
 - carry the `recommId` from whatever recommendation they clicked to get here.
 
 The runtime is one hand-written ES5-compatible file. There is no build step and nothing to add to
-your bundle.
+your bundle — unless you want it there; see [Bundling the runtime yourself](#bundling-the-runtime-yourself).
 
 ## From JavaScript
 
@@ -35,6 +35,43 @@ Bee.rate('e42', 0.5);      // Recombee's scale runs -1 … 1
 Bee.portion('e42', 0.75);
 Bee.stop();                // consent declined after load
 ```
+
+## Bundling the runtime yourself
+
+If all of your JavaScript ships from a CDN or a bundle, take the runtime with it instead of letting
+Bee add its own `<script>` tag.
+
+1. Turn off **Inject the front-end runtime** (`injectRuntime`). Bee then writes nothing into the
+   page — no script tag, no inline `Bee.start(…)`.
+2. Copy `bee.js` and `bee.mjs` from `vendor/justinholtweb/craft-bee/src/web/assets/runtime/dist/`
+   into your source, side by side.
+3. Write the configuration into the page:
+
+   ```twig
+   <body {{ craft.bee.pageItem(entry) }} {{ craft.bee.runtimeConfig() }}>
+   ```
+
+4. Start it:
+
+   ```js
+   import Bee from './vendor/bee.mjs';   // ES-module bundlers (Vite, Rollup, esbuild, webpack)
+   // const Bee = require('./vendor/bee.js');   // CommonJS bundlers
+   // or a plain <script src="…/bee.js">, then window.Bee
+
+   Bee.start();
+   ```
+
+`Bee.start()` with no arguments reads `data-bee-config`, so the tracking endpoint and the
+detail-view delay still come from Bee's settings. Anything you pass — `Bee.start({ delay: 5 })` —
+wins over the page. `runtimeConfig()` renders nothing while tracking is off, which leaves the
+runtime with nowhere to send, so the CP switch still works. Like the injected config, it is
+page-specific rather than visitor-specific, so the page stays cacheable.
+
+`window.Bee` is set either way, so inline calls such as `Bee.cartAdd(…)` keep working. If a page
+ends up with both the injected and the bundled copy, the first one loaded wins and the second hands
+back the same instance — one click listener, one detail view.
+
+**Re-copy the files when you update Bee.** A bundled copy is yours; Composer will not touch it.
 
 ## From Twig, server-side
 

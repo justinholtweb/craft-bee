@@ -10,7 +10,13 @@
 (function (window, document) {
     'use strict';
 
+    // Loaded twice — injected by Bee *and* bundled by the site — the first copy wins, so there is
+    // only ever one click listener and one detail view. A bundler still gets the live instance.
     if (window.Bee) {
+        if (typeof module === 'object' && module && module.exports) {
+            module.exports = window.Bee;
+        }
+
         return;
     }
 
@@ -183,9 +189,44 @@
         send({ kind: 'detailview', itemId: state.item, duration: duration, update: true }, true);
     }
 
+    // ── configuration ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * The configuration `{{ craft.bee.runtimeConfig() }}` writes into the page, for a site that
+     * bundles this file itself. Page-specific, never visitor-specific, so the page stays cacheable.
+     */
+    function pageConfig() {
+        var node = document.querySelector('[data-bee-config]');
+
+        if (!node) {
+            return {};
+        }
+
+        try {
+            var parsed = JSON.parse(node.getAttribute('data-bee-config'));
+
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function configure(options) {
+        for (var key in options || {}) {
+            if (options.hasOwnProperty(key)) {
+                config[key] = options[key];
+            }
+        }
+    }
+
     // ── public API ───────────────────────────────────────────────────────────────────────────
 
     var Bee = {
+        /**
+         * Start tracking. Bee calls this itself when it injects the runtime; a site that bundles
+         * the file calls it with no arguments and the page's `data-bee-config` supplies the rest.
+         * Anything passed here wins over the page.
+         */
         start: function (options) {
             if (state.started) {
                 return;
@@ -193,11 +234,8 @@
 
             state.started = true;
 
-            for (var key in options) {
-                if (options.hasOwnProperty(key)) {
-                    config[key] = options[key];
-                }
-            }
+            configure(pageConfig());
+            configure(options);
 
             document.addEventListener('click', onClick, true);
 
@@ -285,4 +323,10 @@
     };
 
     window.Bee = Bee;
+
+    // For a site that bundles the runtime: a CommonJS bundler gets the same object as the global.
+    // ES-module bundlers use bee.mjs instead, which wraps this file rather than duplicating it.
+    if (typeof module === 'object' && module && module.exports) {
+        module.exports = Bee;
+    }
 })(window, document);

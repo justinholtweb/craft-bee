@@ -19,7 +19,10 @@ them. Bee's pitch is that a merchant configures a source and writes one Twig tag
 - **No runtime dependencies.** The Recombee client is written against Craft's bundled Guzzle rather
   than `recombee/php-api-client`, so batching, retries and the log are Bee's own and an SDK bump
   cannot break a customer's site.
-- No build step. The front-end runtime is one hand-written ES5-compatible file.
+- No build step. The front-end runtime is one hand-written ES5-compatible file (`bee.js`, a classic
+  script that sets `window.Bee` and `module.exports`), plus `bee.mjs`, a three-line ES-module wrapper
+  for sites that bundle it themselves (`injectRuntime` off + `craft.bee.runtimeConfig()`). Never
+  duplicate the runtime into the wrapper.
 
 ## Architecture
 
@@ -170,6 +173,8 @@ reason as the tracking endpoint. Resolvers never throw; they answer `failed: tru
   `Source::isLive()` too.
 - **The element save handlers are only attached when Bee is configured at boot.** A test that
   configures Bee in memory has to attach them itself (`_registerElementHandlers` via reflection).
+- **`checks.php` rejects the substrings `require(` and `import ` anywhere in `bee.js`, comments
+  included** — it is how the suite proves the runtime has no dependencies. Word comments around them.
 - **A cache counter read then written back is not a rate limit** under parallel requests — they all
   read the same number. `TrackController::rateLimit()` holds Craft's mutex around it.
 
@@ -181,11 +186,12 @@ No local PHP on this Mac. Everything runs inside the plugin-testing container:
 
 ```sh
 cd ~/Sites/plugin-testing
-ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 113 checks
+ddev exec php /var/www/craft-bee/tests/integration/checks.php           # 116 checks
 ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 checks
 ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
 ddev exec php /var/www/craft-bee/tests/integration/graphql.php          #  25 checks, real executeQuery() per schema
 bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  12 checks
+ddev exec node /var/www/craft-bee/tests/integration/runtime.mjs         #   9 checks, bee.js/bee.mjs run against a stub DOM
 ddev exec bash -c 'find /var/www/craft-bee/src -name "*.php" -print0 | xargs -0 -n1 php -l'
 ```
 

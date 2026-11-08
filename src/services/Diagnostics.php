@@ -263,7 +263,7 @@ class Diagnostics extends Component
         if (!$settings->injectRuntime) {
             return $this->result('tracking', 'Interaction tracking', self::INFO,
                 'Tracking is on, but the front-end runtime is not injected.',
-                'Either turn on “Inject the front-end runtime”, or record views yourself with {{ craft.bee.trackView(entry) }}.');
+                'If your own JavaScript bundles bee.js, add {{ craft.bee.runtimeConfig() }} to the page and call Bee.start(). Otherwise turn on “Inject the front-end runtime”, or record views yourself with {{ craft.bee.trackView(entry) }}.');
         }
 
         return $this->result('tracking', 'Interaction tracking', self::OK,

@@ -232,6 +232,11 @@ or from Twig, server-side:
 {% do craft.bee.trackRating(entry, craft.bee.stars(4)) %}   {# 4 out of 5 → 0.5 #}
 ```
 
+Bundling your own JavaScript? Turn off **Inject the front-end runtime**, import `bee.mjs` (or
+`bee.js`) from your bundle, and add `{{ craft.bee.runtimeConfig() }}` to the page — `Bee.start()`
+reads the endpoint and delay from it. See
+[the interactions docs](https://justinholt.com/plugins/craft-bee/docs/interactions#bundling-the-runtime-yourself).
+
 **The visitor is always resolved server-side**, from the session or a signed first-party cookie. The
 browser cannot name a user, the tracking endpoint refuses items that are not in the catalog, and it
 is rate limited. Nothing personal is stored against a guest ID.

@@ -141,6 +141,36 @@ class BeeVariable
     }
 
     /**
+     * The runtime's configuration, for a site that bundles `bee.js` itself rather than letting Bee
+     * inject it (turn off “Inject the front-end runtime”).
+     *
+     *     <body {{ craft.bee.runtimeConfig() }}>
+     *
+     * The bundled runtime's `Bee.start()` reads it, so the endpoint and the detail-view delay still
+     * come from Bee's settings. Page-specific, never visitor-specific — the page stays cacheable.
+     * Renders nothing while tracking is off, which leaves a bundled runtime with nowhere to send.
+     */
+    public function runtimeConfig(): Markup
+    {
+        try {
+            $plugin = Plugin::getInstance();
+
+            if (!$plugin->getSettings()->trackingEnabled) {
+                return new Markup('', 'UTF-8');
+            }
+
+            return new Markup(
+                Html::renderTagAttributes(['data-bee-config' => \craft\helpers\Json::encode($plugin->runtimeConfig())]),
+                'UTF-8',
+            );
+        } catch (\Throwable $e) {
+            \Craft::warning('Bee could not render its runtime config: ' . $e->getMessage(), 'bee');
+
+            return new Markup('', 'UTF-8');
+        }
+    }
+
+    /**
      * The Recombee item ID for an element, for templates that talk to the API themselves.
      */
     public function itemId(ElementInterface $element): ?string

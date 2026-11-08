@@ -134,7 +134,7 @@
 
   {{ forms.lightswitchField({
     label: "Inject the front-end runtime"|t('bee'),
-    instructions: "Adds a dependency-free script that records detail views with dwell time and attributes clicks back to the recommendation that produced them. Nothing visitor-specific is written into the page, so pages stay cacheable."|t('bee'),
+    instructions: "Adds a dependency-free script that records detail views with dwell time and attributes clicks back to the recommendation that produced them. Nothing visitor-specific is written into the page, so pages stay cacheable. Turn this off to bundle the script with your own JavaScript instead."|t('bee'),
     id: 'injectRuntime',
     name: 'injectRuntime',
     on: settings.injectRuntime,

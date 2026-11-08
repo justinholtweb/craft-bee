@@ -1,5 +1,17 @@
 # Release Notes for Bee
 
+## 5.3.0 — 2026-11-08
+
+### Added
+
+- The front-end runtime can be bundled with your own JavaScript instead of loaded from Craft's
+  asset URL. Turn off **Inject the front-end runtime**, import `bee.mjs` (ES modules) or `bee.js`
+  (CommonJS or a plain script), and add `{{ craft.bee.runtimeConfig() }}` to the page. `Bee.start()`
+  with no arguments reads the endpoint and the detail-view delay from it, so they still follow
+  Bee's settings.
+- Loading the runtime twice — injected and bundled — now leaves one instance rather than ignoring
+  the second copy's export.
+
 ## 5.2.1 — 2026-10-13
 
 ### Fixed

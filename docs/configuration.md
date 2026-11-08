@@ -45,7 +45,7 @@ only the path is recorded.
 | Setting | |
 |---|---|
 | Tracking enabled | The master switch for interactions. |
-| Inject runtime | Add the front-end runtime to site pages. |
+| Inject runtime | Add the front-end runtime to site pages. Turn off to [bundle it yourself](interactions#bundling-the-runtime-yourself). |
 | Track guests | Give guests a cookie ID. Off means only signed-in visitors are tracked. |
 | Guest cookie name / days | Defaults to `CraftBeeId` and a year. |
 | Merge guests on login | Merge the guest profile into the account. **Pro.** |
