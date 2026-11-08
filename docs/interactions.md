@@ -45,11 +45,16 @@ Bee add its own `<script>` tag.
    page — no script tag, no inline `Bee.start(…)`.
 2. Copy `bee.js` and `bee.mjs` from `vendor/justinholtweb/craft-bee/src/web/assets/runtime/dist/`
    into your source, side by side.
-3. Write the configuration into the page:
+3. Write the configuration into the page, on `<body>` or `<html>`:
 
    ```twig
    <body {{ craft.bee.pageItem(entry) }} {{ craft.bee.runtimeConfig() }}>
    ```
+
+   The runtime reads it from those two elements and nowhere else. Pages render user content
+   through sanitisers that keep `data-*` attributes, so a `data-bee-config` anywhere else could
+   have been planted. A relative endpoint, or one on the page's own origin, is all it accepts from
+   the page.
 
 4. Start it:
 

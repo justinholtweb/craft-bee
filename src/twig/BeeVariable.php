@@ -146,6 +146,9 @@ class BeeVariable
      *
      *     <body {{ craft.bee.runtimeConfig() }}>
      *
+     * It must go on `<body>` or `<html>`: the runtime reads it from nowhere else, because a
+     * `data-*` attribute anywhere in the content could have been planted by user content.
+     *
      * The bundled runtime's `Bee.start()` reads it, so the endpoint and the detail-view delay still
      * come from Bee's settings. Page-specific, never visitor-specific — the page stays cacheable.
      * Renders nothing while tracking is off, which leaves a bundled runtime with nowhere to send.

@@ -192,23 +192,70 @@
     // ── configuration ────────────────────────────────────────────────────────────────────────
 
     /**
+     * Whether a URL points at the page's own origin. Without a URL parser only a path-relative
+     * URL can be proven local, so the answer fails closed.
+     */
+    function sameOrigin(url) {
+        if (typeof url !== 'string' || url === '') {
+            return false;
+        }
+
+        // Browsers ignore leading control characters, strip tabs and newlines anywhere, and treat
+        // a backslash like a slash, so `/\evil.test` is protocol-relative by the time it is used.
+        var cleaned = url.replace(/^[\u0000- ]+/, '').replace(/[\t\n\r]/g, '');
+        var base = window.location && window.location.href;
+
+        if (typeof window.URL === 'function' && base) {
+            try {
+                var target = new window.URL(cleaned, base);
+                var page = new window.URL(base);
+
+                return target.protocol === page.protocol && target.host === page.host;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        return /^\/(?![\/\\])/.test(cleaned);
+    }
+
+    /**
      * The configuration `{{ craft.bee.runtimeConfig() }}` writes into the page, for a site that
      * bundles this file itself. Page-specific, never visitor-specific, so the page stays cacheable.
+     *
+     * Read from `<body>` or `<html>` and nowhere else. Pages render user content through
+     * sanitisers that keep `data-*` attributes, and a forged `data-bee-config` earlier in the
+     * document would otherwise win. The endpoint must also be on this site, so even a forged
+     * config cannot send the visitor's browsing somewhere else.
      */
     function pageConfig() {
-        var node = document.querySelector('[data-bee-config]');
+        var nodes = [document.body, document.documentElement];
 
-        if (!node) {
-            return {};
+        for (var i = 0; i < nodes.length; i++) {
+            var raw = nodes[i] && nodes[i].getAttribute ? nodes[i].getAttribute('data-bee-config') : null;
+
+            if (!raw) {
+                continue;
+            }
+
+            try {
+                var parsed = JSON.parse(raw);
+
+                if (!parsed || typeof parsed !== 'object') {
+                    return {};
+                }
+
+                if (parsed.hasOwnProperty('endpoint') && !sameOrigin(parsed.endpoint)) {
+                    delete parsed.endpoint;
+                }
+
+                return parsed;
+            } catch (e) {
+                return {};
+            }
         }
 
-        try {
-            var parsed = JSON.parse(node.getAttribute('data-bee-config'));
-
-            return parsed && typeof parsed === 'object' ? parsed : {};
-        } catch (e) {
-            return {};
-        }
+        return {};
     }
 
     function configure(options) {

@@ -233,7 +233,7 @@ or from Twig, server-side:
 ```
 
 Bundling your own JavaScript? Turn off **Inject the front-end runtime**, import `bee.mjs` (or
-`bee.js`) from your bundle, and add `{{ craft.bee.runtimeConfig() }}` to the page — `Bee.start()`
+`bee.js`) from your bundle, and add `{{ craft.bee.runtimeConfig() }}` to `<body>` or `<html>` — `Bee.start()`
 reads the endpoint and delay from it. See
 [the interactions docs](https://justinholt.com/plugins/craft-bee/docs/interactions#bundling-the-runtime-yourself).
 

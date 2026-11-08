@@ -1,5 +1,16 @@
 # Release Notes for Bee
 
+## 5.3.1 — 2026-11-08
+
+### Security
+
+- A bundled runtime reads `data-bee-config` only from `<body>` or `<html>`. It used to take the
+  first one anywhere in the page, so on a page that lets `data-*` attributes through from user
+  content, a planted one could send the visitor's tracking beacons (item IDs and `recommId`s) to
+  another host, or switch tracking off. An endpoint read from the page must also be on the page's
+  own origin. No CSRF token or credentials were ever exposed; the injected runtime was not
+  affected.
+
 ## 5.3.0 — 2026-11-08
 
 ### Added

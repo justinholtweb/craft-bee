@@ -191,7 +191,7 @@ ddev exec php /var/www/craft-bee/tests/integration/commerce-checks.php  #  23 ch
 ddev exec php /var/www/craft-bee/tests/integration/trust.php            #   8 checks, non-admin + anonymous over HTTP
 ddev exec php /var/www/craft-bee/tests/integration/graphql.php          #  25 checks, real executeQuery() per schema
 bash ~/Sites/craft-bee/tests/integration/cp-smoke.sh                    #  12 checks
-ddev exec node /var/www/craft-bee/tests/integration/runtime.mjs         #   9 checks, bee.js/bee.mjs run against a stub DOM
+ddev exec node /var/www/craft-bee/tests/integration/runtime.mjs         #  15 checks, bee.js/bee.mjs run against a stub DOM
 ddev exec bash -c 'find /var/www/craft-bee/src -name "*.php" -print0 | xargs -0 -n1 php -l'
 ```
 
